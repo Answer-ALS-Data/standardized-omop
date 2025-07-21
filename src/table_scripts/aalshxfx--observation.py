@@ -1,0 +1,573 @@
+import pandas as pd
+import logging
+from helpers import (
+    relative_day_to_date,
+    check_missing_concept_ids,
+    get_visit_occurrence_id,
+)
+import os
+from pathlib import Path
+from datetime import datetime
+
+# Get the script's directory
+script_dir = Path(__file__).parent
+project_root = script_dir.parent
+
+# Ensure only the directories exist
+Path("source_tables").mkdir(exist_ok=True)
+
+# Set up logging
+logging.basicConfig(
+    filename=os.path.join("logs", "aalshxfx--observation.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+# Mapping of source variables to their corresponding concept IDs and names
+SITE_MAPPINGS = {
+    "hxgen": {
+        "concept_id": 4082829,
+        "concept_name": "Nonspecific site",
+        "source_value": "Generalized",
+    },
+    "hxblb": {
+        "concept_id": "bulbar_dys",
+        "concept_name": "Bulbar dysfunction",
+        "source_value": "Bulbar",
+    },
+    "hxblbsch": {
+        "concept_id": 23168003,
+        "concept_name": "Speech dysfunction",
+        "source_value": "Speech",
+    },
+    "hxblbsw": {
+        "concept_id": 288939007,
+        "concept_name": "Difficulty swallowing",
+        "source_value": "Swallowing",
+    },
+    "hxax": {"concept_id": 24422004, "concept_name": "Axial", "source_value": "Axial"},
+    "hxaxnk": {
+        "concept_id": 45048000,
+        "concept_name": "Neck structure",
+        "source_value": "Neck",
+    },
+    "hxaxtr": {
+        "concept_id": 22943007,
+        "concept_name": "Trunk structure",
+        "source_value": "Trunk",
+    },
+    "hxaxtrrp": {
+        "concept_id": 321667001,
+        "concept_name": "Respiratory tract structure",
+        "source_value": "Respiratory",
+    },
+    "hxli": {
+        "concept_id": 4282006,
+        "concept_name": "Limb structure",
+        "source_value": "Limb",
+    },
+    "hxliu": {
+        "concept_id": 4200396,
+        "concept_name": "Upper limb structure",
+        "source_value": "Upper",
+    },
+    "hxliul": {
+        "concept_id": 3488338,
+        "concept_name": "Left upper extremity structure",
+        "source_value": "Left Upper",
+    },
+    "hxliur": {
+        "concept_id": 3485386,
+        "concept_name": "Right upper extremity structure",
+        "source_value": "Right Upper",
+    },
+    "hxliuhnd": {
+        "concept_id": [4309650, 78791008],
+        "concept_name": ["Structure of left hand", "Structure of right hand"],
+        "source_value": ["Left Hand/fingers", "Right Hand/fingers"],
+    },
+    "hxliuarm": {
+        "concept_id": [3488338, 3485386],
+        "concept_name": [
+            "Left upper extremity structure",
+            "Right upper extremity structure",
+        ],
+        "source_value": ["Left Arm", "Right Arm"],
+    },
+    "hxlil": {
+        "concept_id": 4267861,
+        "concept_name": "Lower limb structure",
+        "source_value": "Lower",
+    },
+    "hxlill": {
+        "concept_id": 3492826,
+        "concept_name": "Left lower extremity structure",
+        "source_value": "Left Lower",
+    },
+    "hxlilr": {
+        "concept_id": 3505838,
+        "concept_name": "Right lower extremity structure",
+        "source_value": "Right Lower",
+    },
+    "hxlilft": {
+        "concept_id": [4320144, 4298982],
+        "concept_name": ["Structure of left foot", "Structure of right foot"],
+        "source_value": ["Left Ankle/foot/toes", "Right Ankle/foot/toes"],
+    },
+    "hxlilleg": {
+        "concept_id": [3492826, 3505838],
+        "concept_name": [
+            "Left lower extremity structure",
+            "Right lower extremity structure",
+        ],
+        "source_value": ["Left Leg", "Right Leg"],
+    },
+}
+
+
+def check_limb_combination(row, side_var, part_vars):
+    """
+    Check if a limb combination is valid (e.g., left upper + hand/arm)
+    Args:
+        row: The data row
+        side_var: The side variable (e.g., 'hxliul' for left upper)
+        part_vars: List of part variables to check (e.g., ['hxliuhnd', 'hxliuarm'])
+    Returns:
+        bool: True if the combination is valid
+    """
+    if row.get(side_var) != 1:
+        return False
+    return any(row.get(part_var) == 1 for part_var in part_vars)
+
+
+def main():
+    try:
+        # Read source data
+        source_data = pd.read_csv(os.path.join("source_tables", "aalshxfx.csv"))
+        logging.info(f"Read source data with {len(source_data)} rows")
+
+        # Initialize list to store records
+        records = []
+
+        # Set index date
+        index_date = datetime.strptime("2016-01-01", "%Y-%m-%d")
+
+        # Process each row
+        for _, row in source_data.iterrows():
+            # Get person_id
+            person_id = row["Participant_ID"]
+
+            # Process each site variable
+            for site_var, mapping in SITE_MAPPINGS.items():
+                # Skip specific limb parts that need combination checks
+                if site_var in ["hxliuhnd", "hxliuarm", "hxlilft", "hxlilleg"]:
+                    continue
+
+                # Only create entry if value is 1
+                if row.get(site_var) == 1:
+                    if isinstance(mapping["concept_id"], list):
+                        for i in range(len(mapping["concept_id"])):
+                            records.append(
+                                {
+                                    "person_id": person_id,
+                                    "observation_concept_id": 2000000396,
+                                    "observation_concept_name": "ALS anatomical site of symptom onset",
+                                    "observation_source_value": "Site of onset",
+                                    "observation_date": relative_day_to_date(
+                                        row["Visit_Date"], index_date
+                                    ),
+                                    "observation_type_concept_id": 32851,
+                                    "value_as_number": None,
+                                    "value_as_string": None,
+                                    "value_as_concept_id": mapping["concept_id"][i],
+                                    "value_as_concept_name": mapping["concept_name"][i],
+                                    "value_source_value": mapping["source_value"][i],
+                                    "qualifier_concept_id": None,
+                                    "qualifier_concept_name": None,
+                                    "qualifier_source_value": None,
+                                    "unit_concept_id": None,
+                                    "unit_concept_name": None,
+                                    "unit_source_value": None,
+                                    "visit_occurrence_id": get_visit_occurrence_id(
+                                        person_id, row["Visit_Date"]
+                                    ),
+                                    "observation_event_id": None,
+                                    "obs_event_field_concept_id": None,
+                                }
+                            )
+                    else:
+                        records.append(
+                            {
+                                "person_id": person_id,
+                                "observation_concept_id": 2000000396,
+                                "observation_concept_name": "ALS anatomical site of symptom onset",
+                                "observation_source_value": "Site of onset",
+                                "observation_date": relative_day_to_date(
+                                    row["Visit_Date"], index_date
+                                ),
+                                "observation_type_concept_id": 32851,
+                                "value_as_number": None,
+                                "value_as_string": None,
+                                "value_as_concept_id": mapping["concept_id"],
+                                "value_as_concept_name": mapping["concept_name"],
+                                "value_source_value": mapping["source_value"],
+                                "qualifier_concept_id": None,
+                                "qualifier_concept_name": None,
+                                "qualifier_source_value": None,
+                                "unit_concept_id": None,
+                                "unit_concept_name": None,
+                                "unit_source_value": None,
+                                "visit_occurrence_id": get_visit_occurrence_id(
+                                    person_id, row["Visit_Date"]
+                                ),
+                                "observation_event_id": None,
+                                "obs_event_field_concept_id": None,
+                            }
+                        )
+
+            # Handle upper limb combinations
+            if check_limb_combination(row, "hxliul", ["hxliuhnd", "hxliuarm"]):
+                if row.get("hxliuhnd") == 1:
+                    mapping = SITE_MAPPINGS["hxliuhnd"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][
+                                0
+                            ],  # Left hand
+                            "value_as_concept_name": mapping["concept_name"][0],
+                            "value_source_value": mapping["source_value"][0],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+                if row.get("hxliuarm") == 1:
+                    mapping = SITE_MAPPINGS["hxliuarm"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][0],  # Left arm
+                            "value_as_concept_name": mapping["concept_name"][0],
+                            "value_source_value": mapping["source_value"][0],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+
+            if check_limb_combination(row, "hxliur", ["hxliuhnd", "hxliuarm"]):
+                if row.get("hxliuhnd") == 1:
+                    mapping = SITE_MAPPINGS["hxliuhnd"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][
+                                1
+                            ],  # Right hand
+                            "value_as_concept_name": mapping["concept_name"][1],
+                            "value_source_value": mapping["source_value"][1],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+                if row.get("hxliuarm") == 1:
+                    mapping = SITE_MAPPINGS["hxliuarm"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][
+                                1
+                            ],  # Right arm
+                            "value_as_concept_name": mapping["concept_name"][1],
+                            "value_source_value": mapping["source_value"][1],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+
+            # Handle lower limb combinations
+            if check_limb_combination(row, "hxlill", ["hxlilft", "hxlilleg"]):
+                if row.get("hxlilft") == 1:
+                    mapping = SITE_MAPPINGS["hxlilft"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][
+                                0
+                            ],  # Left foot
+                            "value_as_concept_name": mapping["concept_name"][0],
+                            "value_source_value": mapping["source_value"][0],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+                if row.get("hxlilleg") == 1:
+                    mapping = SITE_MAPPINGS["hxlilleg"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][0],  # Left leg
+                            "value_as_concept_name": mapping["concept_name"][0],
+                            "value_source_value": mapping["source_value"][0],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+
+            if check_limb_combination(row, "hxlilr", ["hxlilft", "hxlilleg"]):
+                if row.get("hxlilft") == 1:
+                    mapping = SITE_MAPPINGS["hxlilft"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][
+                                1
+                            ],  # Right foot
+                            "value_as_concept_name": mapping["concept_name"][1],
+                            "value_source_value": mapping["source_value"][1],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+                if row.get("hxlilleg") == 1:
+                    mapping = SITE_MAPPINGS["hxlilleg"]
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 2000000396,
+                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_source_value": "Site of onset",
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": None,
+                            "value_as_string": None,
+                            "value_as_concept_id": mapping["concept_id"][
+                                1
+                            ],  # Right leg
+                            "value_as_concept_name": mapping["concept_name"][1],
+                            "value_source_value": mapping["source_value"][1],
+                            "qualifier_concept_id": None,
+                            "qualifier_concept_name": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": None,
+                            "unit_concept_name": None,
+                            "unit_source_value": None,
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+
+            # Handle Other case - create exactly one entry when hxot is 1
+            if row.get("hxot") == 1:
+                # Get the text from hxotsp if it exists
+                value_source_value = "Other"
+                if pd.notna(row.get("hxotsp")):
+                    value_source_value = f"Other: {str(row['hxotsp']).strip()}"
+
+                # Create single Other entry
+                records.append(
+                    {
+                        "person_id": person_id,
+                        "observation_concept_id": 2000000396,
+                        "observation_concept_name": "ALS anatomical site of symptom onset",
+                        "observation_source_value": "Site of onset",
+                        "observation_date": relative_day_to_date(
+                            row["Visit_Date"], index_date
+                        ),
+                        "observation_type_concept_id": 32851,
+                        "value_as_number": None,
+                        "value_as_string": None,
+                        "value_as_concept_id": 9177,
+                        "value_as_concept_name": "Other",
+                        "value_source_value": value_source_value,
+                        "qualifier_concept_id": None,
+                        "qualifier_concept_name": None,
+                        "qualifier_source_value": None,
+                        "unit_concept_id": None,
+                        "unit_concept_name": None,
+                        "unit_source_value": None,
+                        "visit_occurrence_id": get_visit_occurrence_id(
+                            person_id, row["Visit_Date"]
+                        ),
+                        "observation_event_id": None,
+                        "obs_event_field_concept_id": None,
+                    }
+                )
+
+        # Create DataFrame from records with specified column order
+        column_order = [
+            "person_id",
+            "observation_concept_id",
+            "observation_concept_name",
+            "observation_source_value",
+            "observation_date",
+            "observation_type_concept_id",
+            "value_as_number",
+            "value_as_string",
+            "value_as_concept_id",
+            "value_as_concept_name",
+            "value_source_value",
+            "qualifier_concept_id",
+            "qualifier_concept_name",
+            "qualifier_source_value",
+            "unit_concept_id",
+            "unit_concept_name",
+            "unit_source_value",
+            "visit_occurrence_id",
+            "observation_event_id",
+            "obs_event_field_concept_id",
+        ]
+
+        # Remove any duplicate rows that might have been created
+        output_data = pd.DataFrame(records)[column_order].drop_duplicates()
+        logging.info(f"Created output DataFrame with {len(output_data)} rows")
+
+        # Check for missing concept IDs
+        check_missing_concept_ids(
+            output_data, ["observation_concept_id", "value_as_concept_id"]
+        )
+
+        # Save output
+        output_path = os.path.join("processed_source", "aalshxfx--observation.csv")
+        output_data.to_csv(output_path, index=False)
+        logging.info(f"Saved output to {output_path}")
+
+        logging.info("Successfully completed ETL process")
+
+    except Exception as e:
+        logging.error(f"Error in ETL process: {str(e)}")
+        raise
+
+
+if __name__ == "__main__":
+    main()

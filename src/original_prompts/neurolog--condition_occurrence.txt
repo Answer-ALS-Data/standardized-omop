@@ -1,0 +1,115 @@
+I want to turn the input table into an OMOP table with the indicated fields. 
+The name of the script will be <source_table>--<target_table>.py in lowercase
+Include a logging file
+The source_table is the name of the table in source_tables, but with .csv at the end.
+The target table is the first part of the sheet name in caps, it should be saved the same as the script as .csv in lowercase, in the omop_tables folder
+[] indicates data type, where [relative days] is days since the initial visit, and [integer option] is an integer that represents certain string values.
+<> indicates putting the value of the variable directly into the final table
+<<>> indicates using the value of the variable as an input to some function (named <source_table>_<source_variable>_to_<target_table>_<target_variable>) to fill the target table. 
+	In most cases, this function is as simple as converting from the integer option to the corresponding _meaning column value. Notice that the source_meaning (often corresponding to _source_value) and target_meaning (often corrsponding to _concept_name) might be different
+	In others it is using a relative day and index date to create a new date (index + relative_day). 
+	There may be other functions that require some reasoning from context in the sheet to define
+<<<>>> indicates using another sheet to fill the values for this source-target pair
+/ alone indicates empty on purpose, and that it applies to all entries in the target table
+A target_value with no brackets indicates to enter the literal text shown
+Any _concept_id should have a corresponding _concept_name next to it corresponding to it's textual meaning (usually in it's target_meaning_ column)
+if by the end, a target row have no concept_id it should be filled with code 0 with name No Matching Concept
+
+Here is the set of tables, can you create the ETL code for this? I would like this general logic to apply to any other set of source-target tables:
+
+
+Final column order: person_id	condition_concept_id	condition_concept_name	condition_source_value	condition_start_date	condition_type_concept_id	visit_occurrence_id
+person_id = <Participant_ID>
+condition_start_date = relative_day_to_year(<date1>)
+_type = 32851  (this is Healthcare professional filled survey)
+
+This includes an usagi mapping file, meaning we need to look up the source_meaning values for hidden2 in source_tables/usagi/neurolog_mapping_v3.csv under sourceName, and use the corresponding conceptId and conceptName to populate the concept_id and concept_name
+
+use: from helpers import relative_day_to_date, check_missing_concept_ids, get_visit_occurrence_id
+
+CONDITION_OCCURRENCE-NEUROLOG
+source_table	source_variable_1	source_value_1	source_meaning_1	source_variable_2	source_value_2	source_meaning_2	target_variable_1	target_value_1	target_meaning_1	target_variable_2	target_value_2	target_meaning_2	Notes
+NEUROLOG	hidden2	1	Attention Deficit Disorder				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	2	Autism				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	3	Tourette Syndrome				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	4	Other Behavioral Neurology Disorder	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	5	Alzheimer’s Dementia				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	6	FTD; Amnestic				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	7	FTD; Behavioral Variant				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	8	FTD; Primary Progressive Aphasia (PPA)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	9	Lewy Body Dementia				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	10	Prion Disease (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	11	Other Dementia (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	12	Hemiplegic Migraine				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	13	Migraine; Complicated				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	14	Migraine; Uncomplicated				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	15	Tension Headaches				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	16	Other Headache Disorder (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	17	Adrenoleukodystrophy (ALD)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	18	Canavan				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	19	Late Onset Tay-Sachs (LOTS)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	20	Other Leukodystrophy Disease (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	21	Amyotrophic Lateral Sclerosis (ALS)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	22	Distal Spinal Muscular Atrophy (dSMA)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	23	Hereditary Spastic Paraplegia (HSP)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	24	Hirayama Disease				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	25	Kennedy’s Disease (SBMA)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	26	Post-Polio Syndrome				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	27	Spinomuscular Atrophy (SMA)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	28	Primary Lateral Sclerosis				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	29	Progressive spinal muscular atrophy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	30	Other Motor Neuron Disease (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	31	Ataxia Telangiectasia				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	32	Cerebral Palsy (CP)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	33	Cortical Basilar Degeneration (CBD)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	34	DYT3 Dystonia				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	35	Friedrich’s Ataxia				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	36	Huntington’s Disease (HD)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	37	Multisystem Atrophy (MSA)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	38	Parkinson’s Disease (PD)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	39	Progressive Supranuclear Palsy (PSP)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	40	Spinocerebellar Ataxia (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	41	Other Movement Disorder (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	42	Muscular Dystrophy (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	43	Myopathy (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	44	Myositis (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	45	Myotonic Disorder (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	46	Periodic Paralysis				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	47	Other Muscle Disease (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	48	Brachial Plexopathy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	49	Charcot-Marie-Tooth Disease (CMT)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	50	Chronic Inflammatory Demyelinating Polyneuropathy (CIDP)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	51	Guillain-Barre Syndrome (GBS)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	52	Lumbosacral Plexopathy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	53	Multifactor Motor Neuropathy (MMN)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	54	Polyneuropathy (Type)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	55	Radiculopathy (Level)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	56	Vasculitic Neuropathy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	57	Other Neuropathy/Radiculopathy (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	58	Infectious Encephalopathy (Specify)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	59	Neuro Lyme				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	60	Neuro Syphilis				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	61	West Nile Virus (Specify Involvement)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	62	Other Neuroinfectious Disease (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	63	Acute Disseminated Encephalomyelitis (ADEM)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	64	Multiple Sclerosis (MS)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	65	Neuromyelitis Optica (NMO)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	66	Other Neuroinflammatory Disorder (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	67	Acoustic Neuroma				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	68	CNS Lymphoma				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	69	Glioblastoma				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	70	Meningioma				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	71	Other Neuro-oncological Disorder (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	72	Ischemic Optic Neuropathy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	73	Norrie Disease				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	74	Other Neuro-ophthalmology Disorder (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	75	CNS Vasculitis				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	76	Hemorrhagic Stroke				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	77	Ischemic Stroke				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	78	Subarachnoid Hemorrhage (SAH)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	79	Subdural Hemorrhage (SDH)				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	80	Other Neurovascular Disease (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		
+NEUROLOG	hidden2	81	Benign Rolandic Epilepsy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	82	Juvenile Myoclonic Epilepsy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	83	Temporal Lobe Epilepsy				condition_concept_id			condition_source_value	<<hidden2>>		
+NEUROLOG	hidden2	84	Other Seizure Disorder (Type)	other	[text]		condition_concept_id			condition_source_value	<<hidden2>>; <other>		

@@ -1,0 +1,462 @@
+import pandas as pd
+import logging
+from datetime import datetime
+from helpers import (
+    relative_day_to_date,
+    check_missing_concept_ids,
+    get_visit_occurrence_id,
+)
+
+# Set up logging
+logging.basicConfig(
+    filename="logs/family_history_log--observation.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+# Disease concept mappings
+DISEASE_CONCEPTS = {
+    "fhalz": {
+        "id": 378419,
+        "name": "Alzheimer's disease",
+        "source": "Alzheimer's Disease",
+    },
+    "fhals": {
+        "id": 373182,
+        "name": "Amyotrophic lateral sclerosis",
+        "source": "Amyotrophic Lateral Sclerosis",
+    },
+    "fhdem": {"id": 4182210, "name": "Dementia", "source": "Dementia"},
+    "fhdown": {
+        "id": 4320803,
+        "name": "Anomaly of chromosome pair 21",
+        "source": "Down's Syndrome",
+    },
+    "fhftd": {
+        "id": 4043378,
+        "name": "Frontotemporal dementia",
+        "source": "Frontotemporal Dementia",
+    },
+    "fhhd": {
+        "id": 374341,
+        "name": "Huntington's chorea",
+        "source": "Huntington's Disease",
+    },
+    "fhpd": {
+        "id": 381270,
+        "name": "Parkinson's disease",
+        "source": "Parkinson's Disease",
+    },
+    "fhpsy": {
+        "id": 36308213,
+        "name": "Psychiatric disorder",
+        "source": "Psychiatric Disorder",
+    },
+    "fharth": {"id": 4291025, "name": "Arthritis", "source": "Arthritis"},
+    "fhasth": {"id": 317009, "name": "Asthma", "source": "Asthma"},
+    "fhcanc": {
+        "id": 443392,
+        "name": "Malignant neoplastic disease",
+        "source": "Cancer",
+    },
+    "fhcirc": {
+        "id": 443784,
+        "name": "Vascular disorder",
+        "source": "Circulation Problems",
+    },
+    "fhdiab": {"id": 201820, "name": "Diabetes mellitus", "source": "Diabetes"},
+    "fhhrt": {"id": 321588, "name": "Heart disease", "source": "Heart Disease"},
+    "fhhbp": {
+        "id": 316866,
+        "name": "Hypertensive disorder",
+        "source": "High Blood Pressure",
+    },
+    "fhlung": {
+        "id": 320136,
+        "name": "Disorder of respiratory system",
+        "source": "Lung Disease",
+    },
+    "fhstk": {"id": 381316, "name": "Cerebrovascular accident", "source": "Stroke"},
+}
+
+# Gene concept mappings
+GENE_CONCEPTS = {
+    "fhgnang": {
+        "id": 35961859,
+        "name": "ANG (angiogenin) gene variant measurement",
+        "source": "ANG",
+    },
+    "fhgnc9": {
+        "id": 35954626,
+        "name": "C9orf72 (C9orf72-SMCR8 complex subunit) gene variant measurement",
+        "source": "C90RF72",
+    },
+    "fhgnfus": {
+        "id": 19643404,
+        "name": "FUS gene rearrangement measurement",
+        "source": "FUS",
+    },
+    "fhgnprg": {
+        "id": 35951629,
+        "name": "GRN (granulin precursor) gene variant measurement",
+        "source": "Progranulin",
+    },
+    "fhgnsetx": {
+        "id": 35958907,
+        "name": "SETX (senataxin) gene variant measurement",
+        "source": "SETX",
+    },
+    "fhgnsod1": {
+        "id": 35948140,
+        "name": "SOD1 (superoxide dismutase 1) gene variant measurement",
+        "source": "SOD1",
+    },
+    "fhgntau": {
+        "id": 35946715,
+        "name": "MAPT (microtubule associated protein tau) gene variant measurement",
+        "source": "TAU",
+    },
+    "fhgntdp": {
+        "id": 35964178,
+        "name": "TARDBP (TAR DNA binding protein) gene variant measurement",
+        "source": "TDP-43",
+    },
+    "fhgnvapb": {
+        "id": 35956055,
+        "name": "VAPB (VAMP associated protein B and C) gene variant measurement",
+        "source": "VAPB",
+    },
+    "fhgnvcp": {
+        "id": 35958302,
+        "name": "VCP (valosin containing protein) gene variant measurement",
+        "source": "VCP",
+    },
+    "fhgnot": {
+        "id": 35949229,
+        "name": "PFN1 (profilin 1) gene variant measurement",
+        "source": "Other: Profilin-1",
+    },
+}
+
+
+def get_relative_concept(famrel, famher):
+    """Map family relationship and heredity to concept ID and name"""
+    # Convert famrel to string if it's a valid value
+    famrel = str(famrel).strip().lower() if pd.notna(famrel) else ""
+    # Handle famher value - could be float or string
+    if pd.notna(famher):
+        # Convert float to int if numeric
+        if isinstance(famher, (float, int)):
+            famher = str(int(famher))
+        else:
+            famher = str(famher).strip()
+    else:
+        famher = ""
+
+    logging.info(
+        f"get_relative_concept - famher after processing: {famher}, type: {type(famher)}"
+    )
+
+    # Convert numeric values to text keys
+    number_to_text = {
+        "1": "mother",
+        "2": "father",
+        "3": "sister",
+        "4": "brother",
+        "5": "sister2",
+        "6": "brother2",
+        "7": "daughter",
+        "8": "son",
+        "9": "grandmother",
+        "10": "grandfather",
+        "11": "aunt",
+        "12": "uncle",
+        "13": "cousin",
+    }
+
+    # If famrel is a number, convert it to text
+    if famrel.replace(".", "").isdigit():
+        famrel = number_to_text.get(str(int(float(famrel))), "")
+
+    # Define concepts with descriptive text keys
+    concepts = {
+        "mother": (
+            4051255,
+            "Family history with explicit context pertaining to mother",
+        ),
+        "father": (
+            4051256,
+            "Family history with explicit context pertaining to father",
+        ),
+        "sister": (
+            4051258,
+            "Family history with explicit context pertaining to sister",
+        ),
+        "brother": (
+            4051262,
+            "Family history with explicit context pertaining to brother",
+        ),
+        "sister2": (
+            4051258,
+            "Family history with explicit context pertaining to sister",
+        ),
+        "brother2": (
+            4051262,
+            "Family history with explicit context pertaining to brother",
+        ),
+        "daughter": (
+            4054433,
+            "Family history with explicit context pertaining to daughter",
+        ),
+        "son": (4052795, "Family history with explicit context pertaining to son"),
+        "aunt": (4050943, "Family history with explicit context pertaining to aunt"),
+        "uncle": (4051265, "Family history with explicit context pertaining to uncle"),
+        "cousin": (713135, "Family history with explicit context pertaining to cousin"),
+    }
+
+    # Special handling for grandparents with default to paternal if heredity is blank
+    if famrel == "grandmother":
+        # For source value tracking
+        heredity_source = (
+            "blank" if not famher else ("maternal" if famher == "2" else "paternal")
+        )
+        # Default to paternal if blank
+        is_maternal = famher == "2"
+        logging.info(f"Grandmother case - famher: {famher}, is_maternal: {is_maternal}")
+        return (
+            (
+                (
+                    4050942,
+                    "Family history with explicit context pertaining to maternal grandmother",
+                )
+                if is_maternal
+                else (
+                    4052802,
+                    "Family history with explicit context pertaining to paternal grandmother",
+                )
+            ),
+            heredity_source,
+        )
+    elif famrel == "grandfather":
+        # For source value tracking
+        heredity_source = (
+            "blank" if not famher else ("maternal" if famher == "2" else "paternal")
+        )
+        # Default to paternal if blank
+        is_maternal = famher == "2"
+        logging.info(f"Grandfather case - famher: {famher}, is_maternal: {is_maternal}")
+        return (
+            (
+                (
+                    4052800,
+                    "Family history with explicit context pertaining to maternal grandfather",
+                )
+                if is_maternal
+                else (
+                    4052801,
+                    "Family history with explicit context pertaining to paternal grandfather",
+                )
+            ),
+            heredity_source,
+        )
+
+    # Return the concept if found, along with None for heredity_source as it's not applicable
+    return concepts.get(famrel, (None, None)), None
+
+
+def create_base_observation(row, index_date):
+    """Create base observation record with common fields"""
+    return {
+        "person_id": row["Participant_ID"],
+        "observation_date": relative_day_to_date(row["Visit_Date"], index_date),
+        "observation_type_concept_id": 32851,  # Healthcare professional filled survey
+        "value_as_number": None,
+        "value_as_string": None,
+        "value_as_concept_id": None,
+        "value_as_concept_name": None,
+        "value_source_value": None,
+        "qualifier_concept_id": None,
+        "qualifier_concept_name": None,
+        "qualifier_source_value": None,
+        "unit_concept_id": None,
+        "unit_concept_name": None,
+        "unit_source_value": None,
+        "visit_occurrence_id": get_visit_occurrence_id(
+            row["Participant_ID"], row["Visit_Date"]
+        ),
+        "observation_event_id": None,
+        "obs_event_field_concept_id": None,
+    }
+
+
+def process_family_history(row, index_date):
+    """Process family history with conditions/genes as values"""
+    observations = []
+
+    try:
+        # Get the family relationship concept
+        (concept_id, concept_name), heredity_source = get_relative_concept(
+            row["famrel"], row.get("famher", "")
+        )
+
+        if concept_id is None:
+            return []
+
+        # Convert numeric values to text descriptions
+        number_to_text = {
+            "1": "mother",
+            "2": "father",
+            "3": "sister",
+            "4": "brother",
+            "5": "sister2",
+            "6": "brother2",
+            "7": "daughter",
+            "8": "son",
+            "9": "grandmother",
+            "10": "grandfather",
+            "11": "aunt",
+            "12": "uncle",
+            "13": "cousin",
+        }
+
+        famrel = str(row["famrel"]) if pd.notna(row["famrel"]) else ""
+        # Don't convert famher to lowercase, just strip whitespace
+        raw_famher = (
+            str(row.get("famher", "")).strip() if pd.notna(row.get("famher")) else ""
+        )
+
+        # Get gender value and handle numeric types
+        raw_famgen = row.get("famgen")
+        if pd.notna(raw_famgen):
+            # Convert float/int to string integer
+            if isinstance(raw_famgen, (float, int)):
+                raw_famgen = str(int(raw_famgen))
+            else:
+                raw_famgen = str(raw_famgen).strip()
+            gender_text = (
+                "male"
+                if raw_famgen == "1"
+                else ("female" if raw_famgen == "2" else "blank")
+            )
+        else:
+            gender_text = "blank"
+
+        # Convert numeric famrel to text
+        if famrel.replace(".", "").isdigit():
+            famrel_text = number_to_text.get(str(int(float(famrel))), "unknown")
+        else:
+            famrel_text = famrel.strip().lower()
+
+        # Create family member source value
+        family_source = f"relative: {famrel_text}"
+        if heredity_source is not None:
+            family_source += f" | heredity: {heredity_source}"
+        elif raw_famher:
+            # Compare raw_famher with "2" for maternal, anything else (including "1") is paternal
+            heredity_text = "maternal" if raw_famher == "2" else "paternal"
+            family_source += f" | heredity: {heredity_text}"
+
+        # Add gender information
+        family_source += f" | gender: {gender_text}"
+
+        # Process diseases
+        for var, concept in DISEASE_CONCEPTS.items():
+            if var in row and pd.notna(row[var]) and row[var] == 1:
+                observation = create_base_observation(row, index_date)
+                value_source = f"condition: {concept['source']}"
+                if f"{var}sp" in row and pd.notna(row[f"{var}sp"]):
+                    value_source += f" | other: {row[f'{var}sp']}"
+
+                observation.update(
+                    {
+                        "observation_concept_id": concept_id,
+                        "observation_concept_name": concept_name,
+                        "observation_source_value": family_source,
+                        "value_as_concept_id": concept["id"],
+                        "value_as_concept_name": concept["name"],
+                        "value_source_value": value_source,
+                    }
+                )
+                observations.append(observation)
+
+        # Process genes
+        for var, concept in GENE_CONCEPTS.items():
+            if var in row and pd.notna(row[var]) and row[var] == 1:
+                observation = create_base_observation(row, index_date)
+                value_source = f"gene: {concept['source']} positive"
+                if var == "fhgnot" and "fhgnotsp" in row and pd.notna(row["fhgnotsp"]):
+                    value_source += f" | other: {row['fhgnotsp']}"
+
+                observation.update(
+                    {
+                        "observation_concept_id": concept_id,
+                        "observation_concept_name": concept_name,
+                        "observation_source_value": family_source,
+                        "value_as_concept_id": concept["id"],
+                        "value_as_concept_name": concept["name"],
+                        "value_source_value": value_source,
+                    }
+                )
+                observations.append(observation)
+
+        return observations
+    except Exception as e:
+        logging.error(f"Error processing family history: {str(e)}")
+        return []
+
+
+def main():
+    try:
+        # Read source data
+        source_file = "source_tables/family_history_log.csv"
+        source_df = pd.read_csv(source_file)
+
+        # Set index date
+        index_date = datetime.strptime("2016-01-01", "%Y-%m-%d")
+
+        # Transform data
+        observations = []
+        for _, row in source_df.iterrows():
+            observations.extend(process_family_history(row, index_date))
+
+        # Create DataFrame
+        result_df = pd.DataFrame(observations)
+
+        # Ensure columns are in the correct order
+        column_order = [
+            "person_id",
+            "observation_concept_id",
+            "observation_concept_name",
+            "observation_source_value",
+            "observation_date",
+            "observation_type_concept_id",
+            "value_as_number",
+            "value_as_string",
+            "value_as_concept_id",
+            "value_as_concept_name",
+            "value_source_value",
+            "qualifier_concept_id",
+            "qualifier_concept_name",
+            "qualifier_source_value",
+            "unit_concept_id",
+            "unit_concept_name",
+            "unit_source_value",
+            "visit_occurrence_id",
+            "observation_event_id",
+            "obs_event_field_concept_id",
+        ]
+        result_df = result_df[column_order]
+
+        # Save to OMOP tables directory
+        output_file = "processed_source/family_history_log--observation.csv"
+        result_df.to_csv(output_file, index=False)
+
+        logging.info("Successfully transformed family history log to observation table")
+
+    except Exception as e:
+        logging.error(f"Error in main function: {str(e)}")
+        raise
+
+
+if __name__ == "__main__":
+    main()

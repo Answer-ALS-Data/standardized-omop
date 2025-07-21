@@ -1,0 +1,252 @@
+import pandas as pd
+import logging
+from helpers import (
+    relative_day_to_date,
+    check_missing_concept_ids,
+    get_visit_occurrence_id,
+)
+import os
+from pathlib import Path
+from datetime import datetime
+
+# Ensure only the directories exist
+Path("source_tables").mkdir(exist_ok=True)
+
+# Set up logging
+logging.basicConfig(
+    filename="logs/answer_als_medications_log--drug_exposure.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+
+def answer_als_medications_log_route_to_drug_exposure_route_concept_id(route_value):
+    """Convert route values to route concept IDs"""
+    route_mapping = {
+        1: (4132161, "Oral"),
+        2: (4171047, "Intravenous"),
+        3: (4142048, "Subcutaneous"),
+        4: (4263689, "Topical"),
+        5: (40486069, "Respiratory tract"),
+        6: (4262099, "Transdermal"),
+        7: (4290759, "Rectal"),
+        8: (4302612, "Intramuscular"),
+        9: (4292110, "Sublingual"),
+        10: (4177987, "Percutaneous"),
+        99: (0, "No Matching Concept"),
+    }
+    try:
+        route_value = int(route_value)
+        return route_mapping.get(route_value, (0, "No Matching Concept"))
+    except (ValueError, TypeError):
+        return (0, "No Matching Concept")
+
+
+def answer_als_medications_log_route_to_drug_exposure_route_source_value(route_value):
+    """Convert route values to route source values"""
+    route_mapping = {
+        1: "oral",
+        2: "intravenous",
+        3: "subcutaneous",
+        4: "topical",
+        5: "inhalation",
+        6: "transdermal",
+        7: "rectal",
+        8: "intramuscular",
+        9: "sublingual",
+        10: "PEG",
+        99: "other (please specify)",
+    }
+    try:
+        route_value = int(route_value)
+        return route_mapping.get(route_value, "")
+    except (ValueError, TypeError):
+        return ""
+
+
+def answer_als_medications_log_medu_to_unit_text(unit_value, other_specify=None):
+    """Convert medication unit codes to text values"""
+    unit_mapping = {
+        1: "micrograms (ucg)",
+        2: "milligrams (mg)",
+        3: "grams (g)",
+        4: "tablet(s)",
+        5: "capsule(s)",
+        6: "gtt",
+        7: "milliequivalent (meq)",
+        8: "international units (IU)",
+        9: "units (U)",
+        99: other_specify if other_specify else "other",
+    }
+    try:
+        unit_value = int(unit_value)
+        return unit_mapping.get(unit_value, "")
+    except (ValueError, TypeError):
+        return ""
+
+
+def answer_als_medications_log_medfreq_to_frequency_text(
+    freq_value, other_specify=None
+):
+    """Convert medication frequency codes to text values"""
+    freq_mapping = {
+        1: "QD",
+        2: "BID",
+        3: "TID",
+        4: "QID",
+        5: "QHS",
+        6: "continuous IV",
+        7: "PRN",
+        99: other_specify if other_specify else "other",
+    }
+    try:
+        freq_value = int(freq_value)
+        return freq_mapping.get(freq_value, "")
+    except (ValueError, TypeError):
+        return ""
+
+
+def main():
+    try:
+        # Read source data
+        source_data = pd.read_csv(Path("source_tables") / "answer_als_medications_log.csv")
+        usagi_mapping = pd.read_csv(Path("source_tables") / "usagi" / "medications_v2.csv")
+
+        # Initialize output dataframe
+        output_columns = [
+            "person_id",
+            "drug_concept_id",
+            "drug_concept_name",
+            "drug_source_value",
+            "drug_exposure_start_date",
+            "drug_exposure_end_date",
+            "verbatim_end_date",
+            "drug_type_concept_id",
+            "route_concept_id",
+            "route_concept_name",
+            "route_source_value",
+            "visit_occurrence_id",
+        ]
+        output_data = pd.DataFrame(columns=output_columns)
+
+        # Set index date for relative day calculations
+        index_date = datetime(2016, 1, 1)
+
+        # Process each row
+        for _, row in source_data.iterrows():
+            # Get person_id
+            person_id = row["Participant_ID"]
+
+            # Get medication concept mapping from USAGI
+            med = row["med"]
+            mappings = usagi_mapping[
+                usagi_mapping["sourceName"].str.lower().str.strip()
+                == str(med).lower().strip()
+            ]
+
+            # If no mappings found, create a single row with concept_id 0
+            if mappings.empty:
+                mappings = pd.DataFrame(
+                    [
+                        {
+                            "conceptId": 0,
+                            "conceptName": "No Matching Concept",
+                            "equivalence": "",
+                        }
+                    ]
+                )
+
+            # Process each matching concept (could be multiple)
+            for _, mapping in mappings.iterrows():
+                # Get route information
+                route_concept_id, route_concept_name = (
+                    answer_als_medications_log_route_to_drug_exposure_route_concept_id(
+                        row["medrte"]
+                    )
+                )
+                route_source_value = answer_als_medications_log_route_to_drug_exposure_route_source_value(
+                    row["medrte"]
+                )
+
+                # Get unit and frequency information
+                unit_text = answer_als_medications_log_medu_to_unit_text(
+                    row["medu"], row.get("meduotsp", "")
+                )
+                freq_text = answer_als_medications_log_medfreq_to_frequency_text(
+                    row["medfreq"], row.get("medfrqsp", "")
+                )
+
+                # Format the dose part - if meddose is NaN or empty, use empty string
+                dose_part = (
+                    f"{row.get('meddose', '')}"
+                    if pd.notna(row.get("meddose", ""))
+                    else ""
+                )
+                unit_part = f" {unit_text}" if unit_text else ""
+
+                # Handle indication - if nan or empty, use empty string
+                indication = row.get("medind", "")
+                indication = "" if pd.isna(indication) else str(indication)
+
+                # Calculate dates
+                start_date = (
+                    relative_day_to_date(row["medstdt"], index_date)
+                    if not pd.isna(row["medstdt"])
+                    else index_date
+                )
+                end_date = (
+                    relative_day_to_date(row["medenddt"], index_date)
+                    if not pd.isna(row["medenddt"])
+                    else start_date
+                )
+                verbatim_end_date = (
+                    relative_day_to_date(row["medenddt"], index_date)
+                    if not pd.isna(row["medenddt"])
+                    else None
+                )
+
+                # Format dates as dd/mm/yyyy
+                start_date_str = start_date.strftime("%d/%m/%Y")
+                end_date_str = end_date.strftime("%d/%m/%Y")
+                verbatim_end_date_str = (
+                    verbatim_end_date.strftime("%d/%m/%Y") if verbatim_end_date else ""
+                )
+
+                # Create new row
+                new_row = {
+                    "person_id": person_id,
+                    "drug_concept_id": mapping["conceptId"],
+                    "drug_concept_name": mapping["conceptName"],
+                    "drug_source_value": f"drug: {med} | dose: {dose_part}{unit_part} | frequency: {freq_text} | indication: {indication} | equivalence: {mapping['equivalence']}",
+                    "drug_exposure_start_date": start_date_str,
+                    "drug_exposure_end_date": end_date_str,
+                    "verbatim_end_date": verbatim_end_date_str,
+                    "drug_type_concept_id": 32851,  # Healthcare professional filled survey
+                    "route_concept_id": route_concept_id,
+                    "route_concept_name": route_concept_name,
+                    "route_source_value": route_source_value,
+                    "visit_occurrence_id": f"{person_id}_0",  # Default to 0 since we don't have visit date
+                }
+
+                output_data = pd.concat(
+                    [output_data, pd.DataFrame([new_row])], ignore_index=True
+                )
+
+        # Check for missing concept IDs
+        check_missing_concept_ids(output_data, ["drug_concept_id", "route_concept_id"])
+
+        # Save output
+        output_data.to_csv(
+            Path("processed_source") / "answer_als_medications_log--drug_exposure.csv",
+            index=False,
+        )
+
+        logging.info("Successfully completed ETL process")
+
+    except Exception as e:
+        logging.error(f"Error in ETL process: {str(e)}")
+        raise
+
+
+if __name__ == "__main__":
+    main()

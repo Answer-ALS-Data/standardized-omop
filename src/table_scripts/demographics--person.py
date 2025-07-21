@@ -1,0 +1,180 @@
+import pandas as pd
+import logging
+import os
+from helpers import relative_day_to_year, check_missing_concept_ids
+
+# Set up logging
+logging.basicConfig(
+    filename="logs/demographics--person.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+
+def demographics_sex_to_person_gender(sex_value):
+    """Convert demographics sex to OMOP gender concept"""
+    mapping = {1: (8507, "MALE"), 2: (8532, "FEMALE")}
+    if sex_value in mapping:
+        return mapping[sex_value]
+    return (0, "No Matching Concept")
+
+
+def demographics_ethnicity_to_person_ethnicity(ethnic_value):
+    """Convert demographics ethnicity to OMOP ethnicity concept"""
+    mapping = {
+        1: (38003563, "Hispanic or Latino"),
+        2: (38003564, "Not Hispanic or Latino"),
+    }
+    if ethnic_value in mapping:
+        return mapping[ethnic_value]
+    return (0, "No Matching Concept")
+
+
+def process_demographics_to_person():
+    try:
+        # Read source data
+        source_file = "source_tables/demographics.csv"
+        logging.info(f"Reading source data from {source_file}")
+        df = pd.read_csv(source_file)
+
+        # Initialize result DataFrame
+        result = pd.DataFrame()
+
+        # Process each row
+        for _, row in df.iterrows():
+            person_data = {
+                "person_id": row["Participant_ID"],
+                "person_source_value": row["Participant_ID"],
+                "care_site_id": 111219,  # AALS care site ID
+            }
+
+            # Process gender
+            gender_concept_id, gender_concept_name = demographics_sex_to_person_gender(
+                row["sex"]
+            )
+            person_data.update(
+                {
+                    "gender_concept_id": gender_concept_id,
+                    "gender_concept_name": gender_concept_name,
+                    "gender_source_value": (
+                        "Male"
+                        if row["sex"] == 1
+                        else "Female" if row["sex"] == 2 else None
+                    ),
+                }
+            )
+
+            # Process ethnicity
+            ethnicity_concept_id, ethnicity_concept_name = (
+                demographics_ethnicity_to_person_ethnicity(row["ethnic"])
+            )
+            person_data.update(
+                {
+                    "ethnicity_concept_id": ethnicity_concept_id,
+                    "ethnicity_concept_name": ethnicity_concept_name,
+                    "ethnicity_source_value": (
+                        "Hispanic or Latino"
+                        if row["ethnic"] == 1
+                        else "Not Hispanic or Latino" if row["ethnic"] == 2 else None
+                    ),
+                }
+            )
+
+            # Process year of birth
+            person_data["year_of_birth"] = relative_day_to_year(row["dob"])
+
+            # Process race
+            race_columns = ["raceamin", "raceasn", "raceblk", "racenh", "racewt"]
+            race_values = [row[col] for col in race_columns]
+            race_mapping = {
+                "raceamin": (
+                    8657,
+                    "American Indian or Alaska Native",
+                    "American Indian/Alaska Native",
+                ),
+                "raceasn": (8515, "Asian", "Asian"),
+                "raceblk": (
+                    8516,
+                    "Black or African American",
+                    "Black/African American",
+                ),
+                "racenh": (
+                    8557,
+                    "Native Hawaiian or Other Pacific Islander",
+                    "Native Hawaiian/Pacific Islander",
+                ),
+                "racewt": (8527, "White", "White"),
+            }
+
+            # If multiple races are selected, list them all
+            if sum(race_values) > 1:
+                selected_races = []
+                for col in race_columns:
+                    if row[col] == 1:
+                        selected_races.append(race_mapping[col][2])  # Get source value
+                person_data.update(
+                    {
+                        "race_concept_id": 0,
+                        "race_concept_name": "No Matching Concept",
+                        "race_source_value": ", ".join(selected_races),
+                    }
+                )
+            else:
+                # Map single race
+                for col, (
+                    concept_id,
+                    concept_name,
+                    source_value,
+                ) in race_mapping.items():
+                    if row[col] == 1:
+                        person_data.update(
+                            {
+                                "race_concept_id": concept_id,
+                                "race_concept_name": concept_name,
+                                "race_source_value": source_value,
+                            }
+                        )
+                        break
+
+            # Add to result
+            result = pd.concat([result, pd.DataFrame([person_data])], ignore_index=True)
+
+        # Ensure all required columns are present
+        required_columns = [
+            "person_id",
+            "person_source_value",
+            "gender_concept_id",
+            "gender_concept_name",
+            "gender_source_value",
+            "year_of_birth",
+            "race_concept_id",
+            "race_concept_name",
+            "race_source_value",
+            "ethnicity_concept_id",
+            "ethnicity_concept_name",
+            "ethnicity_source_value",
+            "care_site_id",
+        ]
+
+        for col in required_columns:
+            if col not in result.columns:
+                result[col] = None
+
+        # Check for any missing concept_ids
+        result = check_missing_concept_ids(result)
+
+        # Reorder columns
+        result = result[required_columns]
+
+        # Save to OMOP tables directory
+        output_file = "processed_source/demographics--person.csv"
+        result.to_csv(output_file, index=False)
+        logging.info(f"Successfully saved OMOP PERSON table to {output_file}")
+
+    except Exception as e:
+        logging.error(f"Error processing demographics to person: {str(e)}")
+        raise
+
+
+if __name__ == "__main__":
+    process_demographics_to_person()

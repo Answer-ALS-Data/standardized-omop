@@ -1,0 +1,76 @@
+I want to turn the input table into an OMOP table with the indicated fields. 
+The name of the script will be <source_table>--<target_table>.py in lowercase
+Include a logging file
+The source_table is the name of the table in source_tables, but with .csv at the end.
+The target table is the first part of the sheet name in caps, it should be saved the same as the script as .csv in lowercase, in the omop_tables folder
+[] indicates data type, where [relative days] is days since the initial visit, and [integer option] is an integer that represents certain string values.
+<> indicates putting the value of the variable directly into the final table
+<<>> indicates using the value of the variable as an input to some function (named <source_table>_<source_variable>_to_<target_table>_<target_variable>) to fill the target table. 
+	In most cases, this function is as simple as converting from the integer option to the corresponding _meaning column value. Notice that the source_meaning (often corresponding to _source_value) and target_meaning (often corrsponding to _concept_name) might be different
+	In others it is using a relative day and index date to create a new date (index + relative_day). 
+	There may be other functions that require some reasoning from context in the sheet to define
+<<<>>> indicates using another sheet to fill the values for this source-target pair
+/ alone indicates empty on purpose, and that it applies to all entries in the target table
+A target_value with no brackets indicates to enter the literal text shown
+Any _concept_id should have a corresponding _concept_name next to it corresponding to it's textual meaning (usually in it's target_meaning_ column)
+if by the end, a target row have no concept_id it should be filled with code 0 with name No Matching Concept
+
+Here is the set of tables, can you create the ETL code for this? I would like this general logic to apply to any other set of source-target tables:
+
+
+Final column order: person_id	drug_concept_id	drug_concept_name	drug_source_value	drug_exposure_start_date	verbatim_end_date	drug_exposure_end_date	drug_type_concept_id	route_concept_id	route_concept_name	route_source_value	visit_occurrence_id
+person_id = <Participant_ID>
+drug_exposure_start_date = relative_day_to_date(<medstdt>, index_date) if empty, use index date 01/01/2016
+drug_exposure_end_date = relative_day_to_date(<medenddt>, index_date) if empty, use start date as end date
+verbatim_end_date = relative_day_to_date(<medenddt>, index_date) if empty, leave empty
+_type = 32851  (this is Healthcare professional filled survey)
+_source_value = <med> | equivalence: <mmedications_v2.csv:equivalence>
+add to drug_source_value dose: <meddose> <<medu>> | frequency: <medfreq> | indication: <medind>
+
+Unit [medu]
+  [1]  micrograms (ucg)
+  [2]  milligrams (mg)
+  [3]  grams (g)
+  [4]  tablet (s) 
+  [5]  capsule (s)    
+  [6]  gtt
+  [7]  milliequivalent (meq)
+  [8]  international units (IU)
+  [9]  units (U)
+[99]  other (please specify): [meduotsp] [TEXT]
+
+Frequency [medfreq]  
+  [1]  QD
+  [2]  BID
+  [3]  TID
+  [4]  QID
+  [5]  QHS
+  [6]  continuous IV
+  [7]  PRN
+[99]  other (please specify): [medfrqsp] [TEXT]
+
+
+This includes an usagi mapping file, meaning we need to look up the source_meaning values for medhxdsc in source_tables/usagi/medications_v2.csv under sourceName, and use the corresponding conceptId and conceptName to populate the concept_id and concept_name
+if there are multiple exact matches in sourceName, then all of them are applied with a new row for each one (this corresponds to multiple mappings that all apply to the same entry)
+
+
+ANSWER_ALS_Medications_Log-drug_exposure
+target_row_group	source_table	source_variable_1	source_value_1	source_meaning_1	target_variable_1	target_value_1	target_meaning_1	target_variable_2	target_value_2	target_meaning_2	Notes
+1	answer_als_medications_log	med	[text]		drug_concept_id	<<<DRUG_EXPOSURE-answer_als_medications_log-medication>>>		drug_source_value	<<<DRUG_EXPOSURE-answer_als_medications_log-medication>>>		
+1	answer_als_medications_log	medrte	[interger option]		route_concept_id	<<<DRUG_EXPOSURE-answer_als_medications_log-medrte>>>		route_source_value	<<<DRUG_EXPOSURE-answer_als_medications_log-medrte>>>		
+1	answer_als_medications_log	medstdt	[relative day]		drug_exposure_start_date	<medstdt>	relative day into date				
+1	answer_als_medications_log	medenddt	[relative day]		drug_exposure_end_date	<medenddt>	relative day into date				
+
+DRUG_EXPOSURE-answer_als_medications_log-medrte
+source_table	source_variable_1	source_value_1	source_meaning_1	target_variable_1	target_value_1	target_meaning_1	target_variable_2	target_value_2	target_meaning_2	Notes
+answer_als_medications_log	medrte	1	oral	route_concept_id	4132161	Oral	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	2	intravenous	route_concept_id	4171047	Intravenous	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	3	subcutaneous	route_concept_id	4142048	Subcutaneous	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	4	topical	route_concept_id	4263689	Topical	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	5	inhalation	route_concept_id	40486069	Respiratory tract	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	6	transdermal	route_concept_id	4262099	Transdermal	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	7	rectal	route_concept_id	4290759	Rectal	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	8	intramuscular	route_concept_id	4302612	Intramuscular	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	9	sublingual	route_concept_id	4292110	Sublingual	route_source_value	<<medrte>>		Meaning, not number,  goes into source value
+answer_als_medications_log	medrte	10	PEG	route_concept_id	4177987	Percutaneous	route_source_value	<<medrte>>		PEG is for gastronomy, may want to leave out and rely on feeding tube table instead
+answer_als_medications_log	medrte	99	other (please specify)	route_concept_id	0		route_source_value	<<medrte>>		We don't need to bother mapping this other right now

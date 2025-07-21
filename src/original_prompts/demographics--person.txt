@@ -1,0 +1,48 @@
+I want to turn the input table into an OMOP table with the indicated fields. 
+The name of the script will be <source_table>--<target_table>.py in lowercase
+Include a logging file
+The source_table is the name of the table in source_tables, but with .csv at the end.
+The target table is the first part of the sheet name in caps, it should be saved the same as the script as .csv in lowercase, in the omop_tables folder
+[] indicates data type, where [relative days] is days since the initial visit, and [integer option] is an integer that represents certain string values.
+<> indicates putting the value of the variable directly into the final table
+<<>> indicates using the value of the variable as an input to some function (named <source_table>_<source_variable>_to_<target_table>_<target_variable>) to fill the target table. 
+	In most cases, this function is as simple as converting from the integer option to the corresponding _meaning column value. Notice that the source_meaning (often corresponding to _source_value) and target_meaning (often corrsponding to _concept_name) might be different
+	In others it is using a relative day and index date to create a new date (index + relative_day). 
+	There may be other functions that require some reasoning from context in the sheet to define
+<<<>>> indicates using another sheet to fill the values for this source-target pair
+/ alone indicates empty on purpose, and that it applies to all entries in the target table
+A target_value with no brackets indicates to enter the literal text shown
+Any _concept_id should have a corresponding _concept_name next to it corresponding to it's textual meaning (usually in it's target_meaning_ column)
+if by the end, a target row have no concept_id it should be filled with code 0 with name No Matching Concept
+
+Here is the set of tables, can you create the ETL code for this? I would like this general logic to apply to any other set of source-target tables:
+
+
+Final column order: person_id	person_source_value	gender_concept_id	gender_concept_name	gender_source_value	year_of_birth	race_concept_id	race_concept_name	race_source_value	ethnicity_concept_id	ethnicity_concept_name	ethnicity_source_value	care_site_id
+
+person_id = person_source_value
+
+use: from helpers import relative_day_to_year, check_missing_concept_ids
+
+PERSON
+target_row_group	source_table	source_variable_1	source_value_1	source_meaning_1	target_variable_1	target_value_1	target_meaning_1	target_variable_2	target_value_2	target_meaning_2	Notes
+1	/	/	/		care_site_id	111219					Used to distiguish between organizations (AALS: 111219)
+1	Demographics	Participant_ID	[text]		person_source_value	<Participant_ID>					
+1	Demographics	raceamin	1	American Indian/Alaska Native	race_concept_id	8657	American Indian or Alaska Native	race_source_value	American Indian/Alaska Native		If multiple races = 1, then undefined
+1	Demographics	raceasn	1	Asian	race_concept_id	8515	Asian	race_source_value	Asian		If multiple races = 1, then undefined
+1	Demographics	raceblk	1	Black/African American	race_concept_id	8516	Black or African American	race_source_value	Black/African American		If multiple races = 1, then undefined
+1	Demographics	racenh	1	Native Hawaiian/Pacific Islander	race_concept_id	8557	Native Hawaiian or Other Pacific Islander	race_source_value	Native Hawaiian/Pacific Islander		If multiple races = 1, then undefined
+1	Demographics	racewt	1	White	race_concept_id	8527	White	race_source_value	White		If multiple races = 1, then undefined
+1	Demographics	dob	[relative day]		year_of_birth	<dob>					Use 01/01/2016 index date
+1	Demographics	sex	[interger option]		gender_concept_id	<<<PERSON-demographics-sex>>>		gender_source_value	<<<PERSON-demographics-sex>>>		
+1	Demographics	ethnic	[interger option]		ethnicity_concept_id	<<<PERSON-demographics-ethnicity>>>		ethnicity_source_value	<<<PERSON-demographics-ethnicity>>>		
+
+PERSON-demographics-sex
+source_table	source_variable_1	source_value_1	source_meaning_1	target_variable_1	target_value_1	target_meaning_1	target_variable_2	target_value_2	target_meaning_2	Notes
+Demographics	sex	1	Male	gender_concept_id	8507	MALE	gender_source_value	<<sex>>		Meaning, not number,  goes into source value
+Demographics	sex	2	Female	gender_concept_id	8532	FEMALE	gender_source_value	<<sex>>		Meaning, not number,  goes into source value
+
+PERSON-demographics-ethnicity
+source_table	source_variable_1	source_value_1	source_meaning_1	target_variable_1	target_value_1	target_meaning_1	target_variable_2	target_value_2	target_meaning_2	Notes
+Demographics	ethnic	1	Hispanic or Latino	ethnicity_concept_id	38003563	Hispanic or Latino	ethnicity_source_value	<<ethnicity>>		Meaning, not number,  goes into source value
+Demographics	ethnic	2	Not Hispanic or Latino	ethnicity_concept_id	38003564	Not Hispanic or Latino	ethnicity_source_value	<<ethnicity>>		Meaning, not number,  goes into source value

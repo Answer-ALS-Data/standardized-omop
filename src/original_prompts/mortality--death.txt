@@ -1,0 +1,19 @@
+I want to turn the input table into an OMOP table with the indicated fields. 
+The name of the script will be <source_table>--<target_table>.py in lowercase
+Include a logging file
+The source_table is the name of the table in source_tables, but with .csv at the end.
+The target table is the first part of the sheet name in caps, it should be saved the same as the script as .csv in lowercase, in the omop_tables folder
+A target_value with no brackets indicates to enter the literal text shown
+Any _concept_id should have a corresponding _concept_name next to it corresponding to it's textual meaning (usually in it's target_meaning_ column)
+if by the end, a target row have no concept_id it should be filled with code 0 with name No Matching Concept
+
+person_id = <Participant_ID>
+_date = relative_day_to_date(<dieddt>)
+_type = 32851  (this is Healthcare professional filled survey)
+_source_value = death_cause: <diedcaus> | icd10cm: <icd10cm> (if either empty, just leave as blank, no nan)
+
+use: from helpers import relative_day_to_date, check_missing_concept_ids
+
+This includes an mapping file, meaning we need to look up the values for diedcaus in source_tables/usagi/Mortality OMOP Mapping.csv , and use the corresponding cause_concept_id and cause_concept_name to populate the concept_id and concept_name
+
+Final column order: person_id	death_date	death_type_concept_id		cause_concept_id	cause_concept_name	cause_source_value
