@@ -75,8 +75,17 @@ def aalsdx3_to_observation_value_source_value(value):
     return mapping.get(value, "Unknown")
 
 
+# Load concept.csv for concept lookups
+def load_concept_lookup():
+    concept_df = pd.read_csv("source_tables/omop_tables/concept.csv", dtype=str)
+    concept_id_to_name = dict(zip(concept_df["concept_id"].astype(int), concept_df["concept_name"]))
+    return concept_id_to_name
+
+CONCEPT_ID_TO_NAME = load_concept_lookup()
+
+
 def elescrlr_to_observation_value_as_concept_id(value):
-    """Convert elescrlr value to concept ID"""
+    """Convert elescrlr value to concept ID, using concept.csv if possible"""
     mapping = {
         1: 2000000062,  # Suspected
         2: 2000000058,  # Possible
@@ -84,7 +93,11 @@ def elescrlr_to_observation_value_as_concept_id(value):
         4: 2000000059,  # Probable
         5: 2000000057,  # Definite
     }
-    return mapping.get(value, 0)
+    concept_id = mapping.get(value, 0)
+    # Only return if present in concept.csv, else fallback to hardcoded
+    if concept_id in CONCEPT_ID_TO_NAME:
+        return concept_id
+    return concept_id  # fallback (could be 0)
 
 
 def elescrlr_to_observation_value_source_value(value):
@@ -170,15 +183,18 @@ def aalsdx3_to_observation_value_as_concept_name(value):
 
 
 def elescrlr_to_observation_value_as_concept_name(value):
-    """Convert elescrlr value to concept name"""
-    mapping = {
-        1: "Suspected",  # 2000000062
-        2: "Possible",  # 2000000058
-        3: "Probable Laboratory Supported",  # 2000000060
-        4: "Probable",  # 2000000059
-        5: "Definite",  # 2000000057
+    """Convert elescrlr value to concept name using concept.csv only"""
+    value_to_concept_id = {
+        1: 2000000062,  # Suspected
+        2: 2000000058,  # Possible
+        3: 2000000060,  # Probable Laboratory Supported
+        4: 2000000059,  # Probable
+        5: 2000000057,  # Definite
     }
-    return mapping.get(value, "Unknown")
+    concept_id = value_to_concept_id.get(value)
+    if concept_id is not None:
+        return CONCEPT_ID_TO_NAME[concept_id]
+    return "Unknown"
 
 
 def clinical_indicator_to_observation_value_as_concept_name(value):
@@ -221,8 +237,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
         observation_items = [
             {
                 "source_column": "alsdx1",
-                "concept_id": "als_diagnosis_presence_lmn",
-                "concept_name": "Presence of evidence of lower motor neuron (LMN) degeneration by clinical, electrophysiological or neuropathologic examination",
+                "concept_id": 2000002000,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002000],
                 "source_value": "Topographical location and pattern of progression of UMN and LMN signs, including signs of spread within a region or to other regions, consistent with ALS?",
                 "value_converter": aalsdx1_to_observation_value_as_concept_id,
                 "source_value_converter": aalsdx1_to_observation_value_source_value,
@@ -230,8 +246,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "alsdx1",
-                "concept_id": "als_diagnosis_presence_umn",
-                "concept_name": "Presence of evidence of upper motor neuron (UMN) degeneration by clinical examination",
+                "concept_id": 2000002001,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002001],
                 "source_value": "Topographical location and pattern of progression of UMN and LMN signs, including signs of spread within a region or to other regions, consistent with ALS?",
                 "value_converter": aalsdx1_to_observation_value_as_concept_id,
                 "source_value_converter": aalsdx1_to_observation_value_source_value,
@@ -240,7 +256,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "alsdx1",
                 "concept_id": 2000000020,
-                "concept_name": "Presence of progressive spread of symptoms or signs within a region or to other regions as determined by history or examination",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000020],
                 "source_value": "Topographical location and pattern of progression of UMN and LMN signs, including signs of spread within a region or to other regions, consistent with ALS?",
                 "value_converter": aalsdx1_to_observation_value_as_concept_id,
                 "source_value_converter": aalsdx1_to_observation_value_source_value,
@@ -249,7 +265,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "alsdx2",
                 "concept_id": 2000000021,
-                "concept_name": "Absence of electrophysiological or pathological evidence of other disease processes that might explain the signs of LMN and/or UMN degeneration",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000021],
                 "source_value": "Exclusion by electrophysiological testing of all other processes including conduction block that might explain the underlying signs and symptoms?",
                 "value_converter": aalsdx2_to_observation_value_as_concept_id,
                 "source_value_converter": aalsdx2_to_observation_value_source_value,
@@ -258,7 +274,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "alsdx3",
                 "concept_id": 2000000022,
-                "concept_name": "Absence of neuroimaging evidence of other disease processes that might explain the observed clinical and electrophysiological signs",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000022],
                 "source_value": "Exclusion by neuroimaging of other disease processes such as myelopathy or radiculopathy that might explain observed clinical and electrophysiological signs?",
                 "value_converter": aalsdx3_to_observation_value_as_concept_id,
                 "source_value_converter": aalsdx3_to_observation_value_source_value,
@@ -267,7 +283,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "elescrlr",
                 "concept_id": 2000000061,
-                "concept_name": "El Escorial criteria - revised",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000061],
                 "source_value": "Revised El Escorial Criteria for ALS",
                 "value_converter": elescrlr_to_observation_value_as_concept_id,
                 "source_value_converter": elescrlr_to_observation_value_source_value,
@@ -276,7 +292,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "blbcumn",
                 "concept_id": 2000000035,
-                "concept_name": "Bulbar upper motor neuron clinical indicator",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000035],
                 "source_value": "Bulbar upper motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -284,8 +300,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "luecumn",
-                "concept_id": "lueumnclinind",
-                "concept_name": "Left upper extremity upper motor neuron clinical indicator",
+                "concept_id": 2000002002,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002002],
                 "source_value": "Left upper extremity upper motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -293,8 +309,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "ruecumn",
-                "concept_id": "rueumnclinind",
-                "concept_name": "Right upper extremity upper motor neuron clinical indicator",
+                "concept_id": 2000002003,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002003],
                 "source_value": "Right upper extremity upper motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -302,8 +318,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "trnkcumn",
-                "concept_id": "trunkumnclinind",
-                "concept_name": "Trunk upper motor neuron clinical indicator",
+                "concept_id": 2000002004,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002004],
                 "source_value": "Trunk upper motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -311,8 +327,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "llecumn",
-                "concept_id": "lleumnclinind",
-                "concept_name": "Left lower extremity upper motor neuron clinical indicator",
+                "concept_id": 2000002005,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002005],
                 "source_value": "Left lower extremity upper motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -320,8 +336,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "rlecumn",
-                "concept_id": "rleumnclinind",
-                "concept_name": "Right lower extremity upper motor neuron clinical indicator",
+                "concept_id": 2000002006,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002006],
                 "source_value": "Right lower extremity upper motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -330,7 +346,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "blbclmn",
                 "concept_id": 2000000029,
-                "concept_name": "Bulbar lower motor neuron clinical indicator",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000029],
                 "source_value": "Bulbar lower motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -338,8 +354,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "lueclmn",
-                "concept_id": "luelmnclinind",
-                "concept_name": "Left upper extremity lower motor neuron clinical indicator",
+                "concept_id": 2000002007,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002007],
                 "source_value": "Left upper extremity lower motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -347,8 +363,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "rueclmn",
-                "concept_id": "ruelmnclinind",
-                "concept_name": "Right upper extremity lower motor neuron clinical indicator",
+                "concept_id": 2000002008,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002008],
                 "source_value": "Right upper extremity lower motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -356,8 +372,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "trnkclmn",
-                "concept_id": "trunklmnclinind",
-                "concept_name": "Trunk lower motor neuron clinical indicator",
+                "concept_id": 2000002009,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002009],
                 "source_value": "Trunk lower motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -365,8 +381,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "lleclmn",
-                "concept_id": "llelmnclinind",
-                "concept_name": "Left lower extremity lower motor neuron clinical indicator",
+                "concept_id": 2000002010,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002010],
                 "source_value": "Left lower extremity lower motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -374,8 +390,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "rleclmn",
-                "concept_id": "rlelmnclinind",
-                "concept_name": "Right lower extremity lower motor neuron clinical indicator",
+                "concept_id": 2000002011,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002011],
                 "source_value": "Right lower extremity lower motor neuron clinical indicator",
                 "value_converter": clinical_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": clinical_indicator_to_observation_value_source_value,
@@ -384,7 +400,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             {
                 "source_column": "blbelmn",
                 "concept_id": 2000000030,
-                "concept_name": "Bulbar lower motor neuron electromyogram indicator",
+                "concept_name": CONCEPT_ID_TO_NAME[2000000030],
                 "source_value": "Bulbar lower motor neuron electromyogram indicator",
                 "value_converter": emg_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": emg_indicator_to_observation_value_source_value,
@@ -392,8 +408,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "lueelmn",
-                "concept_id": "luelmnemgind",
-                "concept_name": "Left upper extremity lower motor neuron electromyogram indicator",
+                "concept_id": 2000002012,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002012],
                 "source_value": "Left upper extremity lower motor neuron electromyogram indicator",
                 "value_converter": emg_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": emg_indicator_to_observation_value_source_value,
@@ -401,8 +417,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "rueelmn",
-                "concept_id": "ruelmnemgind",
-                "concept_name": "Right upper extremity lower motor neuron electromyogram indicator",
+                "concept_id": 2000002013,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002013],
                 "source_value": "Right upper extremity lower motor neuron electromyogram indicator",
                 "value_converter": emg_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": emg_indicator_to_observation_value_source_value,
@@ -410,8 +426,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "trnkelmn",
-                "concept_id": "trunklmnemgind",
-                "concept_name": "Trunk lower motor neuron electromyogram indicator",
+                "concept_id": 2000002014,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002014],
                 "source_value": "Trunk lower motor neuron electromyogram indicator",
                 "value_converter": emg_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": emg_indicator_to_observation_value_source_value,
@@ -419,8 +435,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "lleelmn",
-                "concept_id": "llelmnemgind",
-                "concept_name": "Left lower extremity lower motor neuron electromyogram indicator",
+                "concept_id": 2000002015,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002015],
                 "source_value": "Left lower extremity lower motor neuron electromyogram indicator",
                 "value_converter": emg_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": emg_indicator_to_observation_value_source_value,
@@ -428,8 +444,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
             },
             {
                 "source_column": "rleelmn",
-                "concept_id": "rlelmnemgind",
-                "concept_name": "Right lower extremity lower motor neuron electromyogram indicator",
+                "concept_id": 2000002016,
+                "concept_name": CONCEPT_ID_TO_NAME[2000002016],
                 "source_value": "Right lower extremity lower motor neuron electromyogram indicator",
                 "value_converter": emg_indicator_to_observation_value_as_concept_id,
                 "source_value_converter": emg_indicator_to_observation_value_source_value,
