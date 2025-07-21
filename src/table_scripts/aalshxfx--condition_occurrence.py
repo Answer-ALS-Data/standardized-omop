@@ -9,10 +9,20 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+# Load concept mapping
+concept_csv_path = os.path.join("source_tables", "omop_tables", "concept.csv")
+concept_df = pd.read_csv(concept_csv_path, dtype={"concept_id": str})
+concept_id_to_name = dict(zip(concept_df["concept_id"], concept_df["concept_name"]))
+
+# Load subject group mapping
+subjects_csv_path = os.path.join("source_tables", "subjects.csv")
+subjects_df = pd.read_csv(subjects_csv_path, dtype={"Participant_ID": str, "subject_group_id": str})
+subject_group_map = dict(zip(subjects_df["Participant_ID"], subjects_df["subject_group_id"]))
+
 
 # Make os relative path from directory names
 logs_dir = os.path.join("logs", "aalshxfx--condition_occurrence.log")
-processed_source_dir = os.path.join("processed_source", "aalshxfx.csv")
+processed_source_dir = os.path.join("processed_source", "aalshxfx--condition_occurrence.csv")
 source_tables_dir = os.path.join("source_tables", "aalshxfx.csv")
 
 # Set up logging
@@ -47,52 +57,87 @@ def main():
         for _, row in source_data.iterrows():
             # Get person_id
             person_id = row["Participant_ID"]
+            subject_group_id = subject_group_map.get(person_id)
+            if subject_group_id is None:
+                continue  # skip if no group info
 
-            # Process diagnosis date
-            if pd.notna(row.get("diagdt")):
-                condition_start_date = relative_day_to_date(row["diagdt"], index_date)
-                output_data = pd.concat(
-                    [
-                        output_data,
-                        pd.DataFrame(
-                            [
-                                {
-                                    "person_id": person_id,
-                                    "condition_concept_id": 373182,
-                                    "condition_concept_name": "Amyotrophic lateral sclerosis",
-                                    "condition_source_value": "Date of ALS diagnosis",
-                                    "condition_start_date": condition_start_date,
-                                    "condition_type_concept_id": 32851,
-                                    "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
-                                }
-                            ]
-                        ),
-                    ],
-                    ignore_index=True,
-                )
-
-            # Process symptom onset date
-            if pd.notna(row.get("onsetdt")):
-                condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
-                output_data = pd.concat(
-                    [
-                        output_data,
-                        pd.DataFrame(
-                            [
-                                {
-                                    "person_id": person_id,
-                                    "condition_concept_id": "2000000397",
-                                    "condition_concept_name": "ALS symptom onset",
-                                    "condition_source_value": "Date of ALS symptom onset",
-                                    "condition_start_date": condition_start_date,
-                                    "condition_type_concept_id": 32851,
-                                    "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
-                                }
-                            ]
-                        ),
-                    ],
-                    ignore_index=True,
-                )
+            # ALS group
+            if subject_group_id == "1":
+                # Process diagnosis date
+                if pd.notna(row.get("diagdt")):
+                    condition_start_date = relative_day_to_date(row["diagdt"], index_date)
+                    diagnosis_concept_id = "373182"
+                    diagnosis_concept_name = "Amyotrophic lateral sclerosis"
+                    output_data = pd.concat(
+                        [
+                            output_data,
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "person_id": person_id,
+                                        "condition_concept_id": diagnosis_concept_id,
+                                        "condition_concept_name": diagnosis_concept_name,
+                                        "condition_source_value": "Date of ALS diagnosis",
+                                        "condition_start_date": condition_start_date,
+                                        "condition_type_concept_id": 32851,
+                                        "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
+                                    }
+                                ]
+                            ),
+                        ],
+                        ignore_index=True,
+                    )
+                # Process ALS symptom onset date
+                if pd.notna(row.get("onsetdt")):
+                    condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
+                    onset_concept_id = "2000000397"
+                    onset_concept_name = concept_id_to_name[onset_concept_id]
+                    output_data = pd.concat(
+                        [
+                            output_data,
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "person_id": person_id,
+                                        "condition_concept_id": onset_concept_id,
+                                        "condition_concept_name": onset_concept_name,
+                                        "condition_source_value": "Date of ALS symptom onset",
+                                        "condition_start_date": condition_start_date,
+                                        "condition_type_concept_id": 32851,
+                                        "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
+                                    }
+                                ]
+                            ),
+                        ],
+                        ignore_index=True,
+                    )
+            # Non-ALS MND group
+            elif subject_group_id == "17":
+                # Only process MND symptom onset (no diagnosis)
+                if pd.notna(row.get("onsetdt")):
+                    condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
+                    onset_concept_id = "2000002019"
+                    onset_concept_name = concept_id_to_name[onset_concept_id]
+                    output_data = pd.concat(
+                        [
+                            output_data,
+                            pd.DataFrame(
+                                [
+                                    {
+                                        "person_id": person_id,
+                                        "condition_concept_id": onset_concept_id,
+                                        "condition_concept_name": onset_concept_name,
+                                        "condition_source_value": "Date of MND symptom onset",
+                                        "condition_start_date": condition_start_date,
+                                        "condition_type_concept_id": 32851,
+                                        "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
+                                    }
+                                ]
+                            ),
+                        ],
+                        ignore_index=True,
+                    )
+            # All other groups: skip
 
         # Check for missing concept IDs
         check_missing_concept_ids(output_data, ["condition_concept_id"])

@@ -23,6 +23,16 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+# Load concept mapping
+concept_csv_path = os.path.join("source_tables", "omop_tables", "concept.csv")
+concept_df = pd.read_csv(concept_csv_path, dtype={"concept_id": str})
+concept_id_to_name = dict(zip(concept_df["concept_id"], concept_df["concept_name"]))
+
+# Load subject group mapping
+subjects_csv_path = os.path.join("source_tables", "subjects.csv")
+subjects_df = pd.read_csv(subjects_csv_path, dtype={"Participant_ID": str, "subject_group_id": str})
+subject_group_map = dict(zip(subjects_df["Participant_ID"], subjects_df["subject_group_id"]))
+
 # Mapping of source variables to their corresponding concept IDs and names
 SITE_MAPPINGS = {
     "hxgen": {
@@ -124,6 +134,10 @@ SITE_MAPPINGS = {
     },
 }
 
+# Update SITE_MAPPINGS['hxblb'] to use concept_id and concept_name from concept.csv
+SITE_MAPPINGS["hxblb"]["concept_id"] = "2000002017"
+SITE_MAPPINGS["hxblb"]["concept_name"] = concept_id_to_name["2000002017"]
+
 
 def check_limb_combination(row, side_var, part_vars):
     """
@@ -156,6 +170,17 @@ def main():
         for _, row in source_data.iterrows():
             # Get person_id
             person_id = row["Participant_ID"]
+            subject_group_id = subject_group_map.get(person_id)
+            if subject_group_id not in ("1", "17"):
+                continue  # Only process ALS or MND
+
+            # Determine concept for anatomical site of symptom onset
+            if subject_group_id == "1":
+                site_concept_id = "2000000396"
+                site_concept_name = concept_id_to_name[site_concept_id]
+            elif subject_group_id == "17":
+                site_concept_id = "2000002018"
+                site_concept_name = concept_id_to_name[site_concept_id]
 
             # Process each site variable
             for site_var, mapping in SITE_MAPPINGS.items():
@@ -170,8 +195,8 @@ def main():
                             records.append(
                                 {
                                     "person_id": person_id,
-                                    "observation_concept_id": 2000000396,
-                                    "observation_concept_name": "ALS anatomical site of symptom onset",
+                                    "observation_concept_id": site_concept_id,
+                                    "observation_concept_name": site_concept_name,
                                     "observation_source_value": "Site of onset",
                                     "observation_date": relative_day_to_date(
                                         row["Visit_Date"], index_date
@@ -199,8 +224,8 @@ def main():
                         records.append(
                             {
                                 "person_id": person_id,
-                                "observation_concept_id": 2000000396,
-                                "observation_concept_name": "ALS anatomical site of symptom onset",
+                                "observation_concept_id": site_concept_id,
+                                "observation_concept_name": site_concept_name,
                                 "observation_source_value": "Site of onset",
                                 "observation_date": relative_day_to_date(
                                     row["Visit_Date"], index_date
@@ -232,8 +257,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -241,9 +266,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][
-                                0
-                            ],  # Left hand
+                            "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": mapping["source_value"][0],
                             "qualifier_concept_id": None,
@@ -264,8 +287,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -273,7 +296,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][0],  # Left arm
+                            "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": mapping["source_value"][0],
                             "qualifier_concept_id": None,
@@ -296,8 +319,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -305,9 +328,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][
-                                1
-                            ],  # Right hand
+                            "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": mapping["source_value"][1],
                             "qualifier_concept_id": None,
@@ -328,8 +349,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -337,9 +358,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][
-                                1
-                            ],  # Right arm
+                            "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": mapping["source_value"][1],
                             "qualifier_concept_id": None,
@@ -363,8 +382,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -372,9 +391,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][
-                                0
-                            ],  # Left foot
+                            "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": mapping["source_value"][0],
                             "qualifier_concept_id": None,
@@ -395,8 +412,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -404,7 +421,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][0],  # Left leg
+                            "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": mapping["source_value"][0],
                             "qualifier_concept_id": None,
@@ -427,8 +444,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -436,9 +453,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][
-                                1
-                            ],  # Right foot
+                            "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": mapping["source_value"][1],
                             "qualifier_concept_id": None,
@@ -459,8 +474,8 @@ def main():
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 2000000396,
-                            "observation_concept_name": "ALS anatomical site of symptom onset",
+                            "observation_concept_id": site_concept_id,
+                            "observation_concept_name": site_concept_name,
                             "observation_source_value": "Site of onset",
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -468,9 +483,7 @@ def main():
                             "observation_type_concept_id": 32851,
                             "value_as_number": None,
                             "value_as_string": None,
-                            "value_as_concept_id": mapping["concept_id"][
-                                1
-                            ],  # Right leg
+                            "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": mapping["source_value"][1],
                             "qualifier_concept_id": None,
@@ -498,8 +511,8 @@ def main():
                 records.append(
                     {
                         "person_id": person_id,
-                        "observation_concept_id": 2000000396,
-                        "observation_concept_name": "ALS anatomical site of symptom onset",
+                        "observation_concept_id": site_concept_id,
+                        "observation_concept_name": site_concept_name,
                         "observation_source_value": "Site of onset",
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
