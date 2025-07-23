@@ -154,6 +154,25 @@ def check_limb_combination(row, side_var, part_vars):
     return any(row.get(part_var) == 1 for part_var in part_vars)
 
 
+# Formatting function for *_source_value fields
+
+def format_source_value(table, var, var_interpretation, value, value_interpretation):
+    # Table and variable
+    if var:
+        left = f"{table}+{var}"
+    else:
+        left = f"{table}+from_ecrf"
+    # Variable interpretation
+    if var_interpretation and var_interpretation.strip() and var_interpretation.strip().lower() != var.strip().lower():
+        left += f" ({var_interpretation})"
+    # Value
+    right = f"{value}"
+    # Value interpretation
+    if value_interpretation and str(value_interpretation).strip() and str(value_interpretation).strip().lower() != str(value).strip().lower():
+        right += f" ({value_interpretation})"
+    return f"{left}: {right}"
+
+
 def main():
     try:
         # Read source data
@@ -190,14 +209,16 @@ def main():
 
                 # Only create entry if value is 1
                 if row.get(site_var) == 1:
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
                     if isinstance(mapping["concept_id"], list):
                         for i in range(len(mapping["concept_id"])):
+                            value_source_value = f"aalshxfx+{site_var} ({mapping['concept_name'][i]}): 1 (Yes)"
                             records.append(
                                 {
                                     "person_id": person_id,
                                     "observation_concept_id": site_concept_id,
                                     "observation_concept_name": site_concept_name,
-                                    "observation_source_value": "Site of onset",
+                                    "observation_source_value": obs_source_value,
                                     "observation_date": relative_day_to_date(
                                         row["Visit_Date"], index_date
                                     ),
@@ -206,7 +227,7 @@ def main():
                                     "value_as_string": None,
                                     "value_as_concept_id": mapping["concept_id"][i],
                                     "value_as_concept_name": mapping["concept_name"][i],
-                                    "value_source_value": mapping["source_value"][i],
+                                    "value_source_value": value_source_value,
                                     "qualifier_concept_id": None,
                                     "qualifier_concept_name": None,
                                     "qualifier_source_value": None,
@@ -221,12 +242,13 @@ def main():
                                 }
                             )
                     else:
+                        value_source_value = f"aalshxfx+{site_var} ({mapping['concept_name']}): 1 (Yes)"
                         records.append(
                             {
                                 "person_id": person_id,
                                 "observation_concept_id": site_concept_id,
                                 "observation_concept_name": site_concept_name,
-                                "observation_source_value": "Site of onset",
+                                "observation_source_value": obs_source_value,
                                 "observation_date": relative_day_to_date(
                                     row["Visit_Date"], index_date
                                 ),
@@ -235,7 +257,7 @@ def main():
                                 "value_as_string": None,
                                 "value_as_concept_id": mapping["concept_id"],
                                 "value_as_concept_name": mapping["concept_name"],
-                                "value_source_value": mapping["source_value"],
+                                "value_source_value": value_source_value,
                                 "qualifier_concept_id": None,
                                 "qualifier_concept_name": None,
                                 "qualifier_source_value": None,
@@ -254,12 +276,14 @@ def main():
             if check_limb_combination(row, "hxliul", ["hxliuhnd", "hxliuarm"]):
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxliuhnd ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -268,7 +292,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
-                            "value_source_value": mapping["source_value"][0],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -284,12 +308,14 @@ def main():
                     )
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxliuarm ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -298,7 +324,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
-                            "value_source_value": mapping["source_value"][0],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -316,12 +342,14 @@ def main():
             if check_limb_combination(row, "hxliur", ["hxliuhnd", "hxliuarm"]):
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxliuhnd ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -330,7 +358,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
-                            "value_source_value": mapping["source_value"][1],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -346,12 +374,14 @@ def main():
                     )
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxliuarm ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -360,7 +390,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
-                            "value_source_value": mapping["source_value"][1],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -379,12 +409,14 @@ def main():
             if check_limb_combination(row, "hxlill", ["hxlilft", "hxlilleg"]):
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxlilft ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -393,7 +425,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
-                            "value_source_value": mapping["source_value"][0],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -409,12 +441,14 @@ def main():
                     )
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxlilleg ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -423,7 +457,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
                             "value_as_concept_name": mapping["concept_name"][0],
-                            "value_source_value": mapping["source_value"][0],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -441,12 +475,14 @@ def main():
             if check_limb_combination(row, "hxlilr", ["hxlilft", "hxlilleg"]):
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxlilft ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -455,7 +491,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
-                            "value_source_value": mapping["source_value"][1],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -471,12 +507,14 @@ def main():
                     )
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
+                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    value_source_value = f"aalshxfx+hxlilleg ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
                             "observation_concept_name": site_concept_name,
-                            "observation_source_value": "Site of onset",
+                            "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
@@ -485,7 +523,7 @@ def main():
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
                             "value_as_concept_name": mapping["concept_name"][1],
-                            "value_source_value": mapping["source_value"][1],
+                            "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
                             "qualifier_concept_name": None,
                             "qualifier_source_value": None,
@@ -503,17 +541,18 @@ def main():
             # Handle Other case - create exactly one entry when hxot is 1
             if row.get("hxot") == 1:
                 # Get the text from hxotsp if it exists
-                value_source_value = "Other"
+                value_source_value = "aalshxfx+hxot: Other"
                 if pd.notna(row.get("hxotsp")):
-                    value_source_value = f"Other: {str(row['hxotsp']).strip()}"
+                    value_source_value = f"aalshxfx+hxot: Other: {str(row['hxotsp']).strip()}"
 
                 # Create single Other entry
+                obs_source_value = "aalshxfx+from_ecrf: Site of onset"
                 records.append(
                     {
                         "person_id": person_id,
                         "observation_concept_id": site_concept_id,
                         "observation_concept_name": site_concept_name,
-                        "observation_source_value": "Site of onset",
+                        "observation_source_value": obs_source_value,
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
                         ),

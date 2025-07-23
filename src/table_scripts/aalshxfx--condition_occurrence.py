@@ -19,6 +19,12 @@ subjects_csv_path = os.path.join("source_tables", "subjects.csv")
 subjects_df = pd.read_csv(subjects_csv_path, dtype={"Participant_ID": str, "subject_group_id": str})
 subject_group_map = dict(zip(subjects_df["Participant_ID"], subjects_df["subject_group_id"]))
 
+# Add subject group interpretation mapping
+subject_group_interpretation = {
+    "1": "ALS",
+    "17": "Non-ALS MND",
+}
+
 
 # Make os relative path from directory names
 logs_dir = os.path.join("logs", "aalshxfx--condition_occurrence.log")
@@ -68,6 +74,12 @@ def main():
                     condition_start_date = relative_day_to_date(row["diagdt"], index_date)
                     diagnosis_concept_id = "373182"
                     diagnosis_concept_name = "Amyotrophic lateral sclerosis"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    condition_source_value = f"{group_part} | aalshxfx+from_ecrf: Date of ALS diagnosis"
                     output_data = pd.concat(
                         [
                             output_data,
@@ -77,7 +89,7 @@ def main():
                                         "person_id": person_id,
                                         "condition_concept_id": diagnosis_concept_id,
                                         "condition_concept_name": diagnosis_concept_name,
-                                        "condition_source_value": "Date of ALS diagnosis",
+                                        "condition_source_value": condition_source_value,
                                         "condition_start_date": condition_start_date,
                                         "condition_type_concept_id": 32851,
                                         "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
@@ -92,6 +104,12 @@ def main():
                     condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
                     onset_concept_id = "2000000397"
                     onset_concept_name = concept_id_to_name[onset_concept_id]
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    condition_source_value = f"{group_part} | aalshxfx+from_ecrf: Date of ALS symptom onset"
                     output_data = pd.concat(
                         [
                             output_data,
@@ -101,7 +119,7 @@ def main():
                                         "person_id": person_id,
                                         "condition_concept_id": onset_concept_id,
                                         "condition_concept_name": onset_concept_name,
-                                        "condition_source_value": "Date of ALS symptom onset",
+                                        "condition_source_value": condition_source_value,
                                         "condition_start_date": condition_start_date,
                                         "condition_type_concept_id": 32851,
                                         "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
@@ -118,6 +136,12 @@ def main():
                     condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
                     onset_concept_id = "2000002019"
                     onset_concept_name = concept_id_to_name[onset_concept_id]
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    condition_source_value = f"{group_part} | aalshxfx+from_ecrf: Date of MND symptom onset"
                     output_data = pd.concat(
                         [
                             output_data,
@@ -127,7 +151,7 @@ def main():
                                         "person_id": person_id,
                                         "condition_concept_id": onset_concept_id,
                                         "condition_concept_name": onset_concept_name,
-                                        "condition_source_value": "Date of MND symptom onset",
+                                        "condition_source_value": condition_source_value,
                                         "condition_start_date": condition_start_date,
                                         "condition_type_concept_id": 32851,
                                         "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
