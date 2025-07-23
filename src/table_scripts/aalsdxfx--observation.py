@@ -217,6 +217,28 @@ def emg_indicator_to_observation_value_as_concept_name(value):
     return mapping.get(value, "Unknown")
 
 
+def format_source_value(table, var, var_interpretation, value, value_interpretation):
+    """
+    Format source value as: table+var (var_interpretation): value (val_interpretation)
+    Omit interpretation if same as term before or missing. Use 'from_ecrf' if no variable.
+    No pipes for singles.
+    """
+    # Table and variable
+    if var:
+        left = f"{table}+{var}"
+    else:
+        left = f"{table}+from_ecrf"
+    # Variable interpretation
+    if var_interpretation and var_interpretation.strip() and var_interpretation.strip().lower() != var.strip().lower():
+        left += f" ({var_interpretation})"
+    # Value
+    right = f"{value}"
+    # Value interpretation
+    if value_interpretation and str(value_interpretation).strip() and str(value_interpretation).strip().lower() != str(value).strip().lower():
+        right += f" ({value_interpretation})"
+    return f"{left}: {right}"
+
+
 def process_aalsdxfx_to_observation(source_file, index_date):
     """
     Process AALSDXFX data into OMOP observation format
@@ -486,24 +508,35 @@ def process_aalsdxfx_to_observation(source_file, index_date):
                             f"Converting alsdxdt: {relative_day} to date: {observation_date}"
                         )
 
+                    # observation_source_value: table+from_ecrf: variable description
+                    obs_source_value = f"aalsdxfx+from_ecrf: {item['source_value']}"
+                    # value_source_value: table+var: value (interpretation), omit parentheses if interpretation is missing or same as value
+                    var_name = item["source_column"]
+                    if value_source_value and str(value_source_value).strip().lower() != str(value).strip().lower():
+                        val_source_value = f"aalsdxfx+{var_name}: {value} ({value_source_value})"
+                    else:
+                        val_source_value = f"aalsdxfx+{var_name}: {value}"
+                    qualifier_source_value = ""
+                    unit_source_value = ""
+
                     observation = {
                         "person_id": person_id,
                         "observation_concept_id": item["concept_id"],
                         "observation_concept_name": item["concept_name"],
-                        "observation_source_value": item["source_value"],
+                        "observation_source_value": obs_source_value,
                         "observation_date": observation_date,
                         "observation_type_concept_id": 32851,  # Healthcare professional filled survey
                         "value_as_number": "",  # Intentionally empty
                         "value_as_string": "",  # Intentionally empty
                         "value_as_concept_id": value_as_concept_id,
                         "value_as_concept_name": value_as_concept_name,
-                        "value_source_value": value_source_value,
+                        "value_source_value": val_source_value,
                         "qualifier_concept_id": "",  # Intentionally empty
                         "qualifier_concept_name": "",  # Intentionally empty
-                        "qualifier_source_value": "",  # Intentionally empty
+                        "qualifier_source_value": qualifier_source_value,
                         "unit_concept_id": "",  # Intentionally empty
                         "unit_concept_name": "",  # Intentionally empty
-                        "unit_source_value": "",  # Intentionally empty
+                        "unit_source_value": unit_source_value,
                         "visit_occurrence_id": visit_occurrence_id,
                         "observation_event_id": "",  # Intentionally empty
                         "obs_event_field_concept_id": "",  # Intentionally empty
