@@ -128,22 +128,28 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
                 # Get the text value for the test result
                 result_text = "Positive" if row[test_var] == 1 else "Negative"
 
-                # Build value_source_value with labeled sections
-                value_source_parts = []
-                value_source_parts.append(f"result: {result_text}")
-
-                # For SOD1, append the labeled mutation text if available
+                # Build source values using the new format
+                source_parts = []
+                
+                # Add the test result
+                source_parts.append(f"als_gene_mutations+{test_var}: {int(row[test_var])} ({result_text})")
+                
+                # For SOD1, add the mutation text if available
                 if source_var == "sod1nd" and pd.notna(row.get("sod1muta")):
-                    value_source_parts.append(f"mutation: {row['sod1muta']}")
-
+                    source_parts.append(f"als_gene_mutations+sod1muta: {row['sod1muta']}")
+                
                 # Join the parts with ' | ' separator
-                value_source_value = " | ".join(value_source_parts)
+                value_source_value = " | ".join(source_parts)
+                
+                # For measurement_source_value, use the gene name without "Mutation" suffix
+                gene_name = mapping['source_meaning'].replace(' Mutation', '')
+                measurement_source_value = f"als_gene_mutations+from_ecrf: {gene_name}"
 
                 transformed_row = {
                     "person_id": person_id,
                     "measurement_concept_id": mapping["concept_id"],
                     "measurement_concept_name": mapping["concept_name"],
-                    "measurement_source_value": f"mutation: {mapping['source_meaning'].replace(' Mutation', '')}",
+                    "measurement_source_value": measurement_source_value,
                     "measurement_date": visit_date,
                     "measurement_type_concept_id": 32851,  # Healthcare professional filled survey
                     "value_as_concept_id": (
