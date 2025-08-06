@@ -79,7 +79,7 @@ def main():
                         group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
                     else:
                         group_part = f"subjects+subject_group_id: {subject_group_id}"
-                    condition_source_value = f"{group_part} | aalshxfx+from_ecrf: Date of ALS diagnosis"
+                    condition_source_value = f"{group_part} | aalshxfx+diagdt (Date of ALS diagnosis): {int(row['diagdt'])} (days since screening)"
                     output_data = pd.concat(
                         [
                             output_data,
@@ -109,7 +109,7 @@ def main():
                         group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
                     else:
                         group_part = f"subjects+subject_group_id: {subject_group_id}"
-                    condition_source_value = f"{group_part} | aalshxfx+from_ecrf: Date of ALS symptom onset"
+                    condition_source_value = f"{group_part} | aalshxfx+onsetdt (Date of ALS symptom onset): {int(row['onsetdt'])} (days since screening)"
                     output_data = pd.concat(
                         [
                             output_data,
@@ -141,7 +141,7 @@ def main():
                         group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
                     else:
                         group_part = f"subjects+subject_group_id: {subject_group_id}"
-                    condition_source_value = f"{group_part} | aalshxfx+from_ecrf: Date of MND symptom onset"
+                    condition_source_value = f"{group_part} | aalshxfx+onsetdt (Date of MND symptom onset): {int(row['onsetdt'])} (days since screening)"
                     output_data = pd.concat(
                         [
                             output_data,

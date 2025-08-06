@@ -141,9 +141,9 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
                 # Join the parts with ' | ' separator
                 value_source_value = " | ".join(source_parts)
                 
-                # For measurement_source_value, use the gene name without "Mutation" suffix
+                # For measurement_source_value, use the source variable with gene interpretation
                 gene_name = mapping['source_meaning'].replace(' Mutation', '')
-                measurement_source_value = f"als_gene_mutations+from_ecrf: {gene_name}"
+                measurement_source_value = f"als_gene_mutations+{source_var} ({gene_name})"
 
                 transformed_row = {
                     "person_id": person_id,

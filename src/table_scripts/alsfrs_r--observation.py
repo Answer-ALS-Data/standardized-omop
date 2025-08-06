@@ -54,6 +54,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529071,
                 "name": "Speech [ALSFRS-R]",
                 "question": "Speech",
+                "variable_meaning": "speech function assessment",
                 "values": {
                     4: "Normal speech processes",
                     3: "Detectable speech disturbances",
@@ -66,6 +67,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529072,
                 "name": "Salivation [ALSFRS-R]",
                 "question": "Salivation",
+                "variable_meaning": "saliva control assessment",
                 "values": {
                     4: "Normal",
                     3: "Slight but definite excess of saliva in mouth; may have nighttime drooling",
@@ -78,6 +80,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529073,
                 "name": "Swallowing [ALSFRS-R]",
                 "question": "Swallowing",
+                "variable_meaning": "swallowing function assessment",
                 "values": {
                     4: "Normal eating habits",
                     3: "Early eating problems – occasional choking",
@@ -90,6 +93,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529074,
                 "name": "Handwriting [ALSFRS-R]",
                 "question": "Handwriting",
+                "variable_meaning": "handwriting ability assessment",
                 "values": {
                     4: "Normal",
                     3: "Slow or sloppy; all words are legible",
@@ -102,6 +106,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529075,
                 "name": "Cutting food and handling utensils (patients without gastrostomy) [ALSFRS-R]",
                 "question": "Cutting Food (no gastrostomy)",
+                "variable_meaning": "food preparation ability for patients without gastrostomy",
                 "values": {
                     4: "Normal",
                     3: "Somewhat slow and clumsy, but no help needed",
@@ -114,6 +119,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529076,
                 "name": "Cutting food and handling utensils (patients with gastrostomy) [ALSFRS-R]",
                 "question": "Cutting Food (gastrostomy)",
+                "variable_meaning": "food preparation ability for patients with gastrostomy",
                 "values": {
                     4: "Normal",
                     3: "Clumsy but able to perform all manipulations independently",
@@ -126,6 +132,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529077,
                 "name": "Dressing and hygiene [ALSFRS-R]",
                 "question": "Dressing and Hygiene",
+                "variable_meaning": "self-care ability assessment",
                 "values": {
                     4: "Normal function",
                     3: "Independent and complete self-care with effort or decreased efficiency",
@@ -138,6 +145,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529078,
                 "name": "Turning in bed and adjusting bed clothes [ALSFRS-R]",
                 "question": "Turning in Bed",
+                "variable_meaning": "bed mobility assessment",
                 "values": {
                     4: "Normal",
                     3: "Somewhat slow and clumsy, but no help needed",
@@ -150,6 +158,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529079,
                 "name": "Walking [ALSFRS-R]",
                 "question": "Walking",
+                "variable_meaning": "ambulation ability assessment",
                 "values": {
                     4: "Normal",
                     3: "Early ambulation difficulties",
@@ -162,6 +171,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529080,
                 "name": "Climbing stairs [ALSFRS-R]",
                 "question": "Climbing Stairs",
+                "variable_meaning": "stair climbing ability assessment",
                 "values": {
                     4: "Normal",
                     3: "Slow",
@@ -174,6 +184,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529081,
                 "name": "Dyspnea [ALSFRS-R]",
                 "question": "R-1 Dyspnea",
+                "variable_meaning": "breathing difficulty assessment",
                 "values": {
                     4: "None",
                     3: "Occurs when walking",
@@ -186,6 +197,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529082,
                 "name": "Orthopnea [ALSFRS-R]",
                 "question": "R-2 Orthopnea",
+                "variable_meaning": "sleep-related breathing difficulty assessment",
                 "values": {
                     4: "None",
                     3: "Some difficulty sleeping due to shortness of breath, not using more than 2 pillows",
@@ -198,6 +210,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529083,
                 "name": "Respiratory insufficiency [ALSFRS-R]",
                 "question": "R-3 Respiratory Insufficiency",
+                "variable_meaning": "respiratory support requirement assessment",
                 "values": {
                     4: "None",
                     3: "Intermittent use of NIPPV",
@@ -210,6 +223,7 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 "concept_id": 42529084,
                 "name": "Total score [ALSFRS-R]",
                 "question": "Total score",
+                "variable_meaning": "overall functional assessment score",
                 "values": {},  # Total score doesn't have specific value mappings
             },
         }
@@ -226,18 +240,19 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                 if item in row and pd.notna(row[item]):
                     # Convert to integer
                     value = int(row[item])
-                    # Format value source as "value: description"
-                    value_source = (
-                        f"{value}: {concept_info['values'].get(value, str(value))}"
-                        if concept_info["values"]
-                        else str(value)
-                    )
+                    
+                    # Format value source using new format: table+var: value (interpretation)
+                    value_description = concept_info["values"].get(value, "")
+                    if value_description:
+                        value_source = f"alsfrs_r+{item}: {value} ({value_description})"
+                    else:
+                        value_source = f"alsfrs_r+{item}: {value}"
 
                     observation = {
                         "person_id": person_id,
                         "observation_concept_id": concept_info["concept_id"],
                         "observation_concept_name": concept_info["name"],
-                        "observation_source_value": concept_info["question"],
+                        "observation_source_value": f"alsfrs_r+{item} ({concept_info['variable_meaning']})",
                         "observation_date": visit_date,
                         "observation_type_concept_id": 32851,  # Healthcare professional filled survey
                         "value_as_number": value,

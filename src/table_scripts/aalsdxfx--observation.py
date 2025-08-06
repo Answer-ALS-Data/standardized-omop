@@ -220,23 +220,27 @@ def emg_indicator_to_observation_value_as_concept_name(value):
 def format_source_value(table, var, var_interpretation, value, value_interpretation):
     """
     Format source value as: table+var (var_interpretation): value (val_interpretation)
-    Omit interpretation if same as term before or missing. Use 'from_ecrf' if no variable.
+    Omit interpretation if same as term before or missing. Use actual variable name if no variable.
     No pipes for singles.
     """
     # Table and variable
     if var:
         left = f"{table}+{var}"
     else:
-        left = f"{table}+from_ecrf"
+        left = f"{table}+source_column"
     # Variable interpretation
     if var_interpretation and var_interpretation.strip() and var_interpretation.strip().lower() != var.strip().lower():
         left += f" ({var_interpretation})"
     # Value
-    right = f"{value}"
-    # Value interpretation
-    if value_interpretation and str(value_interpretation).strip() and str(value_interpretation).strip().lower() != str(value).strip().lower():
-        right += f" ({value_interpretation})"
-    return f"{left}: {right}"
+    if value is not None:
+        right = f"{value}"
+        # Value interpretation
+        if value_interpretation and str(value_interpretation).strip() and str(value_interpretation).strip().lower() != str(value).strip().lower():
+            right += f" ({value_interpretation})"
+        return f"{left}: {right}"
+    else:
+        # No value provided - just return the variable with interpretation
+        return left
 
 
 def process_aalsdxfx_to_observation(source_file, index_date):
@@ -508,8 +512,8 @@ def process_aalsdxfx_to_observation(source_file, index_date):
                             f"Converting alsdxdt: {relative_day} to date: {observation_date}"
                         )
 
-                    # observation_source_value: table+from_ecrf: variable description
-                    obs_source_value = f"aalsdxfx+from_ecrf: {item['source_value']}"
+                    # observation_source_value: table+source_column (interpretation) - no value indicates presence of variable led to entry
+                    obs_source_value = f"aalsdxfx+{item['source_column']} ({item['source_value']})"
                     # value_source_value: table+var: value (interpretation), omit parentheses if interpretation is missing or same as value
                     var_name = item["source_column"]
                     if value_source_value and str(value_source_value).strip().lower() != str(value).strip().lower():

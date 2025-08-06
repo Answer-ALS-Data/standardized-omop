@@ -161,16 +161,20 @@ def format_source_value(table, var, var_interpretation, value, value_interpretat
     if var:
         left = f"{table}+{var}"
     else:
-        left = f"{table}+from_ecrf"
+        left = f"{table}+source_column"
     # Variable interpretation
     if var_interpretation and var_interpretation.strip() and var_interpretation.strip().lower() != var.strip().lower():
         left += f" ({var_interpretation})"
     # Value
-    right = f"{value}"
-    # Value interpretation
-    if value_interpretation and str(value_interpretation).strip() and str(value_interpretation).strip().lower() != str(value).strip().lower():
-        right += f" ({value_interpretation})"
-    return f"{left}: {right}"
+    if value is not None:
+        right = f"{value}"
+        # Value interpretation
+        if value_interpretation and str(value_interpretation).strip() and str(value_interpretation).strip().lower() != str(value).strip().lower():
+            right += f" ({value_interpretation})"
+        return f"{left}: {right}"
+    else:
+        # No value provided - just return the variable with interpretation
+        return left
 
 
 def main():
@@ -209,7 +213,7 @@ def main():
 
                 # Only create entry if value is 1
                 if row.get(site_var) == 1:
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = f"aalshxfx+{site_var} (Site of onset)"
                     if isinstance(mapping["concept_id"], list):
                         for i in range(len(mapping["concept_id"])):
                             value_source_value = f"aalshxfx+{site_var} ({mapping['concept_name'][i]}): 1 (Yes)"
@@ -276,7 +280,7 @@ def main():
             if check_limb_combination(row, "hxliul", ["hxliuhnd", "hxliuarm"]):
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxliuhnd (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuhnd ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -308,7 +312,7 @@ def main():
                     )
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxliuarm (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuarm ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -342,7 +346,7 @@ def main():
             if check_limb_combination(row, "hxliur", ["hxliuhnd", "hxliuarm"]):
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxliuhnd (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuhnd ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -374,7 +378,7 @@ def main():
                     )
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxliuarm (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuarm ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -409,7 +413,7 @@ def main():
             if check_limb_combination(row, "hxlill", ["hxlilft", "hxlilleg"]):
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxlilft (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilft ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -441,7 +445,7 @@ def main():
                     )
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxlilleg (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilleg ({mapping['concept_name'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -475,7 +479,7 @@ def main():
             if check_limb_combination(row, "hxlilr", ["hxlilft", "hxlilleg"]):
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxlilft (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilft ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -507,7 +511,7 @@ def main():
                     )
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
-                    obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                    obs_source_value = "aalshxfx+hxlilleg (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilleg ({mapping['concept_name'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -546,7 +550,7 @@ def main():
                     value_source_value = f"aalshxfx+hxot: Other: {str(row['hxotsp']).strip()}"
 
                 # Create single Other entry
-                obs_source_value = "aalshxfx+from_ecrf: Site of onset"
+                obs_source_value = "aalshxfx+hxot (Site of onset)"
                 records.append(
                     {
                         "person_id": person_id,
