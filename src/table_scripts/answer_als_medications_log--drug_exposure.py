@@ -20,6 +20,22 @@ logging.basicConfig(
 )
 
 
+def build_source_value(table_name, var_name, value=None, var_interpretation=None, val_interpretation=None):
+    """Build source value in the new format: table+var (var_interpretation): value (val_interpretation)"""
+    base = f"{table_name}+{var_name}"
+    
+    if var_interpretation:
+        base += f" ({var_interpretation})"
+    
+    if value is not None:
+        result = f"{base}: {value}"
+        if val_interpretation:
+            result += f" ({val_interpretation})"
+        return result
+    else:
+        return base
+
+
 def answer_als_medications_log_route_to_drug_exposure_route_concept_id(route_value):
     """Convert route values to route concept IDs"""
     route_mapping = {
@@ -42,11 +58,11 @@ def answer_als_medications_log_route_to_drug_exposure_route_concept_id(route_val
         return (0, "No Matching Concept")
 
 
-def answer_als_medications_log_route_to_drug_exposure_route_source_value(route_value):
-    """Convert route values to route source values"""
+def answer_als_medications_log_route_to_text(route_value):
+    """Convert route values to route text values"""
     route_mapping = {
         1: "oral",
-        2: "intravenous",
+        2: "intravenous", 
         3: "subcutaneous",
         4: "topical",
         5: "inhalation",
@@ -62,6 +78,19 @@ def answer_als_medications_log_route_to_drug_exposure_route_source_value(route_v
         return route_mapping.get(route_value, "")
     except (ValueError, TypeError):
         return ""
+
+
+def answer_als_medications_log_route_to_drug_exposure_route_source_value(route_value):
+    """Convert route values to route source values in new format"""
+    route_text = answer_als_medications_log_route_to_text(route_value)
+    if route_text:
+        try:
+            route_int = int(route_value)
+            return build_source_value("answer_als_medications_log", "medrte", str(route_int), "medication route", route_text)
+        except (ValueError, TypeError):
+            return build_source_value("answer_als_medications_log", "medrte", route_text, "medication route")
+    else:
+        return build_source_value("answer_als_medications_log", "medrte", var_interpretation="medication route")
 
 
 def answer_als_medications_log_medu_to_unit_text(unit_value, other_specify=None):
@@ -212,12 +241,70 @@ def main():
                     verbatim_end_date.strftime("%d/%m/%Y") if verbatim_end_date else ""
                 )
 
+                # Build drug source value in new format
+                source_parts = []
+                
+                # Add medication name
+                if med:
+                    source_parts.append(build_source_value("answer_als_medications_log", "med", med, "medication name"))
+                
+                # Add dose information
+                if dose_part:
+                    source_parts.append(build_source_value("answer_als_medications_log", "meddose", dose_part, "medication dose"))
+                
+                # Add unit information
+                if unit_text:
+                    unit_value = row.get("medu", "")
+                    if pd.notna(unit_value) and unit_value != "":
+                        # Convert to int to ensure it's an integer
+                        try:
+                            unit_int = int(unit_value)
+                            source_parts.append(build_source_value("answer_als_medications_log", "medu", str(unit_int), "medication unit", unit_text))
+                        except (ValueError, TypeError):
+                            source_parts.append(build_source_value("answer_als_medications_log", "medu", unit_text, "medication unit"))
+                    else:
+                        source_parts.append(build_source_value("answer_als_medications_log", "medu", unit_text, "medication unit"))
+                
+                # Add unit other specify if exists
+                unit_other = row.get("meduotsp", "")
+                if unit_other and pd.notna(unit_other):
+                    source_parts.append(build_source_value("answer_als_medications_log", "meduotsp", unit_other, "unit other specify"))
+                
+                # Add frequency information
+                if freq_text:
+                    freq_value = row.get("medfreq", "")
+                    if pd.notna(freq_value) and freq_value != "":
+                        # Convert to int to ensure it's an integer
+                        try:
+                            freq_int = int(freq_value)
+                            source_parts.append(build_source_value("answer_als_medications_log", "medfreq", str(freq_int), "medication frequency", freq_text))
+                        except (ValueError, TypeError):
+                            source_parts.append(build_source_value("answer_als_medications_log", "medfreq", freq_text, "medication frequency"))
+                    else:
+                        source_parts.append(build_source_value("answer_als_medications_log", "medfreq", freq_text, "medication frequency"))
+                
+                # Add frequency other specify if exists
+                freq_other = row.get("medfrqsp", "")
+                if freq_other and pd.notna(freq_other):
+                    source_parts.append(build_source_value("answer_als_medications_log", "medfrqsp", freq_other, "frequency other specify"))
+                
+                # Add indication
+                if indication:
+                    source_parts.append(build_source_value("answer_als_medications_log", "medind", indication, "medication indication"))
+                
+                # Add equivalence from mapping
+                if mapping.get('equivalence'):
+                    source_parts.append(build_source_value("", "equivalence", mapping['equivalence'], "usagi omop mapping equivalence"))
+                
+                # Join all parts with pipes
+                drug_source_value = " | ".join(source_parts) if len(source_parts) > 1 else source_parts[0] if source_parts else ""
+                
                 # Create new row
                 new_row = {
                     "person_id": person_id,
                     "drug_concept_id": mapping["conceptId"],
                     "drug_concept_name": mapping["conceptName"],
-                    "drug_source_value": f"drug: {med} | dose: {dose_part}{unit_part} | frequency: {freq_text} | indication: {indication} | equivalence: {mapping['equivalence']}",
+                    "drug_source_value": drug_source_value,
                     "drug_exposure_start_date": start_date_str,
                     "drug_exposure_end_date": end_date_str,
                     "verbatim_end_date": verbatim_end_date_str,
