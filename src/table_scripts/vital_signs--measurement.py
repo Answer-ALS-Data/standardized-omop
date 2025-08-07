@@ -200,14 +200,14 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         if temp_type != "Temporal"
                         else "Body temperature - Temporal artery"
                     ),
-                    "measurement_source_value": f"{temp_type} Temperature",
+                    "measurement_source_value": f"vital_signs+temp ({temp_type} Temperature)",
                     "measurement_date": visit_date_str,
                     "measurement_type_concept_id": 32851,
                     "value_as_number": row["temp"],
                     "unit_concept_id": unit_concept_id,
                     "unit_concept_name": unit_name,
                     "unit_source_value": unit_source,
-                    "value_source_value": f"value: {row['temp']} | type: {temp_type}",
+                    "value_source_value": f"vital_signs+temp ({temp_type}): {row['temp']}",
                     "visit_occurrence_id": get_visit_occurrence_id(
                         person_id, row["vsdt"]
                     ),
@@ -222,7 +222,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["bpsys"]["concept_id"],
                 "measurement_concept_name": "Systolic blood pressure",
-                "measurement_source_value": "Systolic Blood Pressure",
+                "measurement_source_value": "vital_signs+bpsys (Systolic Blood Pressure)",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,
                 "value_as_number": row["bpsys"],
@@ -241,7 +241,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         else "Lying blood pressure"
                     )
                 ),
-                "value_source_value": f"value: {row['bpsys']} | position: {('Standing' if row['bppos'] == 1 else 'Sitting' if row['bppos'] == 2 else 'Supine')}",
+                "value_source_value": f"vital_signs+bpsys: {row['bpsys']} | vital_signs+bppos ({('Standing' if row['bppos'] == 1 else 'Sitting' if row['bppos'] == 2 else 'Supine')}): {row['bppos']}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)
@@ -251,7 +251,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["bpdias"]["concept_id"],
                 "measurement_concept_name": "Diastolic blood pressure",
-                "measurement_source_value": "Diastolic Blood Pressure",
+                "measurement_source_value": "vital_signs+bpdias (Diastolic Blood Pressure)",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,
                 "value_as_number": row["bpdias"],
@@ -270,7 +270,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         else "Lying blood pressure"
                     )
                 ),
-                "value_source_value": f"value: {row['bpdias']} | position: {('Standing' if row['bppos'] == 1 else 'Sitting' if row['bppos'] == 2 else 'Supine')}",
+                "value_source_value": f"vital_signs+bpdias: {row['bpdias']} | vital_signs+bppos ({('Standing' if row['bppos'] == 1 else 'Sitting' if row['bppos'] == 2 else 'Supine')}): {row['bppos']}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)
@@ -281,14 +281,14 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["hr"]["concept_id"],
                 "measurement_concept_name": "Heart rate",
-                "measurement_source_value": "Heart rate",
+                "measurement_source_value": "vital_signs+hr (Heart rate)",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,
                 "value_as_number": row["hr"],
                 "unit_concept_id": vital_sign_mappings["hr"]["unit_concept_id"],
                 "unit_concept_name": "beats/min",
                 "unit_source_value": "Beats / min",
-                "value_source_value": f"value: {row['hr']}",
+                "value_source_value": f"vital_signs+hr: {row['hr']}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)
@@ -299,14 +299,14 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["rr"]["concept_id"],
                 "measurement_concept_name": "Respiratory rate",
-                "measurement_source_value": "Respiratory Rate",
+                "measurement_source_value": "vital_signs+rr (Respiratory Rate)",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,
                 "value_as_number": row["rr"],
                 "unit_concept_id": vital_sign_mappings["rr"]["unit_concept_id"],
                 "unit_concept_name": "breaths/min",
                 "unit_source_value": "Breaths / min",
-                "value_source_value": f"value: {row['rr']}",
+                "value_source_value": f"vital_signs+rr: {row['rr']}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)
@@ -323,7 +323,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         "concept_id"
                     ],
                     "measurement_concept_name": "Body weight",
-                    "measurement_source_value": "Weight",
+                    "measurement_source_value": "vital_signs+weight (Weight)",
                     "measurement_date": visit_date_str,
                     "measurement_type_concept_id": 32851,
                     "value_as_number": row["weight"],
@@ -332,7 +332,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         "pound (US)" if row["weightu"] == 1 else "kilogram"
                     ),
                     "unit_source_value": "lb" if row["weightu"] == 1 else "kg",
-                    "value_source_value": f"value: {row['weight']}",
+                    "value_source_value": f"vital_signs+weight: {row['weight']}",
                     "visit_occurrence_id": get_visit_occurrence_id(
                         person_id, row["vsdt"]
                     ),
@@ -351,7 +351,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         "concept_id"
                     ],
                     "measurement_concept_name": "Body height",
-                    "measurement_source_value": "Height",
+                    "measurement_source_value": "vital_signs+height (Height)",
                     "measurement_date": visit_date_str,
                     "measurement_type_concept_id": 32851,
                     "value_as_number": row["height"],
@@ -360,7 +360,7 @@ def vital_signs_to_measurement(source_df, index_date_str):
                         "inch (US)" if row["heightu"] == 1 else "centimeter"
                     ),
                     "unit_source_value": "in" if row["heightu"] == 1 else "cm",
-                    "value_source_value": f"value: {row['height']}",
+                    "value_source_value": f"vital_signs+height: {row['height']}",
                     "visit_occurrence_id": get_visit_occurrence_id(
                         person_id, row["vsdt"]
                     ),
@@ -373,14 +373,14 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["bmi"]["concept_id"],
                 "measurement_concept_name": "Body mass index (BMI) [Ratio]",
-                "measurement_source_value": "BMI",
+                "measurement_source_value": "vital_signs+bmi (BMI)",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,
                 "value_as_number": row["bmi"],
                 "unit_concept_id": vital_sign_mappings["bmi"]["unit_concept_id"],
                 "unit_concept_name": "ratio",
                 "unit_source_value": "BMI",
-                "value_source_value": f"value: {row['bmi']}",
+                "value_source_value": f"vital_signs+bmi: {row['bmi']}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)

@@ -84,17 +84,34 @@ def main():
                     hidden2_value, usagi_mapping
                 )
             )
+            
+            # Get USAGI mapping equivalence
+            mapping_equivalence = "EQUAL"  # Default to EQUAL for now
+            try:
+                mapping = usagi_mapping[usagi_mapping["sourceName"] == hidden2_value]
+                if not mapping.empty:
+                    mapping_equivalence = mapping.iloc[0].get("equivalence", "EQUAL")
+            except Exception as e:
+                logging.warning(f"Could not determine mapping equivalence for {hidden2_value}: {str(e)}")
+                mapping_equivalence = "EQUAL"
 
             # Create condition_source_value with new format
-            condition_source_value = f"Neurological Disease: {hidden2_value}"
-
-            # Add other value if present, ensuring proper prefix
+            source_parts = []
+            
+            # Add hidden2 value (neurolog+hidden2)
+            if pd.notna(hidden2_value) and hidden2_value.strip():
+                source_parts.append(f"neurolog+hidden2 (neurological disease): {hidden2_value}")
+            
+            # Add other value if present (neurolog+other)
             if pd.notna(row.get("other")) and row["other"].strip():
-                # Check if the other value already has the prefix
                 other_value = row["other"].strip()
-                if not other_value.startswith("Other/Type/Specify:"):
-                    other_value = f"Other/Type/Specify: {other_value}"
-                condition_source_value += f" | {other_value}"
+                source_parts.append(f"neurolog+other (specified type): {other_value}")
+            
+            # Add USAGI mapping equivalence
+            source_parts.append(f"+equivalence (usagi omop mapping equivalence): {mapping_equivalence}")
+            
+            # Join parts with pipes if multiple, otherwise just use the single part
+            condition_source_value = " | ".join(source_parts) if len(source_parts) > 1 else source_parts[0] if source_parts else ""
 
             # Add row to output
             output_data = pd.concat(

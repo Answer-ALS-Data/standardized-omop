@@ -47,10 +47,12 @@ def main():
             # Get death_date using relative_day_to_date, default to 1900-01-01 if empty
             if pd.isna(row["dieddt"]):
                 death_date = "1900-01-01"
+                dieddt_value = ""
             else:
                 death_date = relative_day_to_date(row["dieddt"], index_date).strftime(
                     "%Y-%m-%d"
                 )
+                dieddt_value = str(int(row["dieddt"]))
 
             # Get cause information from source data
             diedcaus_value = (
@@ -60,10 +62,26 @@ def main():
                 str(row["icd10cm"]).strip() if pd.notna(row["icd10cm"]) else ""
             )
 
-            # Create cause_source_value with proper handling of empty values
-            cause_source_value = (
-                f"death_cause: {diedcaus_value} | icd10cm: {icd10cm_value}"
-            )
+            # Create cause_source_value using new format
+            source_parts = []
+            
+            # Add dieddt if it has a value
+            if dieddt_value:
+                source_parts.append(f"mortality+dieddt (days since intake): {dieddt_value}")
+            
+            # Add diedcaus if it has a value
+            if diedcaus_value:
+                source_parts.append(f"mortality+diedcaus (death cause): {diedcaus_value}")
+            
+            # Add icd10cm if it has a value
+            if icd10cm_value:
+                source_parts.append(f"mortality+icd10cm (ICD-10-CM code): {icd10cm_value}")
+            
+            # If no values, indicate presence of death record
+            if not source_parts:
+                source_parts.append("mortality+dieddt (days since intake)")
+            
+            cause_source_value = " | ".join(source_parts)
 
             # Get concept details from the mapping file
             cause_concept_id = (

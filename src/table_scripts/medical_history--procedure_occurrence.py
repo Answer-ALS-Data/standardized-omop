@@ -99,7 +99,7 @@ def main():
                                         "person_id": person_id,
                                         "procedure_concept_id": concept_id,
                                         "procedure_concept_name": concept_name,
-                                        "procedure_source_value": f"procedure: {medhxdsc_value} | mapping_equivalence: {equivalence}",
+                                        "procedure_source_value": f"medical_history+medhxdsc (Description): {medhxdsc_value} | medical_history+medhxyr (Year of Diagnosis): {row['medhxyr']} | +equivalence (usagi omop mapping equivalence): {equivalence}",
                                         "procedure_date": procedure_date,
                                         "procedure_type_concept_id": 32851,  # Healthcare professional filled survey
                                         "visit_occurrence_id": visit_occurrence_id,

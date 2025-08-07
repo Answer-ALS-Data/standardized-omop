@@ -97,7 +97,7 @@ def main():
                                         "person_id": person_id,
                                         "device_concept_id": concept_id,
                                         "device_concept_name": concept_name,
-                                        "device_source_value": f"device: {medhxdsc_value} | mapping_equivalence: {equivalence}",
+                                        "device_source_value": f"medical_history+medhxdsc (Description): {medhxdsc_value} | +equivalence (usagi omop mapping equivalence): {equivalence}",
                                         "device_exposure_start_date": device_exposure_start_date,
                                         "device_type_concept_id": 32851,  # Healthcare professional filled survey
                                         "visit_occurrence_id": visit_occurrence_id,
