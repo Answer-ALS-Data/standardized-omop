@@ -113,20 +113,29 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
                 )
                 continue
 
-            # Build value_source_value with labeled sections
+            # Build value_source_value with new format
             value_source_parts = []
-            value_source_parts.append(f"result: {row[source_var]}")
-
-            # Add norm status with explanation
+            
+            # Add result value
+            # Convert to int if it's a numeric value to avoid float display
+            result_value = row[source_var]
+            if pd.notna(result_value) and isinstance(result_value, (int, float)):
+                # Check if it's a whole number
+                if result_value == int(result_value):
+                    result_value = int(result_value)
+            value_source_parts.append(f"auxiliary_chemistry_labs+{source_var} (lab result): {result_value}")
+            
+            # Add norm status
             norm_status = {
                 1: "Normal",
-                2: "Abnormal and Not Clinically Significant",
+                2: "Abnormal and Not Clinically Significant", 
                 3: "Abnormal Clinically Significant",
             }
-            value_source_parts.append(
-                f"norm: {norm_status.get(row[norm_var], 'Unknown')}"
-            )
-
+            norm_interpretation = norm_status.get(row[norm_var], 'Unknown')
+            # Convert to int to ensure integer display
+            norm_value = int(row[norm_var]) if pd.notna(row[norm_var]) else row[norm_var]
+            value_source_parts.append(f"auxiliary_chemistry_labs+{norm_var} (norm status): {norm_value} ({norm_interpretation})")
+            
             # Join the parts with ' | ' separator
             value_source_value = " | ".join(value_source_parts)
 
@@ -149,7 +158,7 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
                 "person_id": person_id,
                 "measurement_concept_id": mapping["concept_id"],
                 "measurement_concept_name": mapping["concept_name"],
-                "measurement_source_value": f"lab: {mapping['source_meaning']}",
+                "measurement_source_value": f"auxiliary_chemistry_labs+{source_var} ({mapping['source_meaning']})",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,  # Healthcare professional filled survey
                 "value_as_number": row[source_var],
@@ -158,7 +167,7 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
                 "value_source_value": value_source_value,
                 "unit_concept_id": unit_concept_id,
                 "unit_concept_name": unit_concept_name,
-                "unit_source_value": row[unit_var],
+                "unit_source_value": f"auxiliary_chemistry_labs+{unit_var} (unit): {row[unit_var]}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["labdt"]),
             }
             transformed_rows.append(transformed_row)

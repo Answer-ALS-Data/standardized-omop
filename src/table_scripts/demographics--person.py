@@ -34,17 +34,42 @@ def process_demographics_to_person():
     try:
         # Read source data
         source_file = "source_tables/demographics.csv"
+        subjects_file = "source_tables/subjects.csv"
         logging.info(f"Reading source data from {source_file}")
         df = pd.read_csv(source_file)
+        
+        # Read subjects data for disease status
+        logging.info(f"Reading subjects data from {subjects_file}")
+        subjects_df = pd.read_csv(subjects_file)
+        
+        # Merge demographics with subjects data
+        df = df.merge(subjects_df[['Participant_ID', 'subject_group_id']], on='Participant_ID', how='left')
+        
+        # Create disease status mapping
+        disease_status_mapping = {
+            1: "ALS",
+            5: "Healthy Control", 
+            11: "Asymptomatic ALS Gene carrier",
+            17: "Non-ALS MND"
+        }
 
         # Initialize result DataFrame
         result = pd.DataFrame()
 
         # Process each row
         for _, row in df.iterrows():
+            # Get disease status
+            subject_group_id = row.get('subject_group_id')
+            disease_status = disease_status_mapping.get(subject_group_id, "Unknown")
+            
+            # Create person source value with disease status
+            person_source_parts = [f"demographics+Participant_ID (participant identifier): {row['Participant_ID']}"]
+            if subject_group_id:
+                person_source_parts.append(f"subjects+subject_group_id (disease status): {subject_group_id} ({disease_status})")
+            
             person_data = {
                 "person_id": row["Participant_ID"],
-                "person_source_value": row["Participant_ID"],
+                "person_source_value": " | ".join(person_source_parts),
                 "care_site_id": 111219,  # AALS care site ID
             }
 
@@ -52,15 +77,17 @@ def process_demographics_to_person():
             gender_concept_id, gender_concept_name = demographics_sex_to_person_gender(
                 row["sex"]
             )
+            gender_source_value = None
+            if row["sex"] == 1:
+                gender_source_value = "demographics+sex (biological sex): 1 (Male)"
+            elif row["sex"] == 2:
+                gender_source_value = "demographics+sex (biological sex): 2 (Female)"
+            
             person_data.update(
                 {
                     "gender_concept_id": gender_concept_id,
                     "gender_concept_name": gender_concept_name,
-                    "gender_source_value": (
-                        "Male"
-                        if row["sex"] == 1
-                        else "Female" if row["sex"] == 2 else None
-                    ),
+                    "gender_source_value": gender_source_value,
                 }
             )
 
@@ -68,20 +95,23 @@ def process_demographics_to_person():
             ethnicity_concept_id, ethnicity_concept_name = (
                 demographics_ethnicity_to_person_ethnicity(row["ethnic"])
             )
+            ethnicity_source_value = None
+            if row["ethnic"] == 1:
+                ethnicity_source_value = "demographics+ethnic (ethnicity): 1 (Hispanic or Latino)"
+            elif row["ethnic"] == 2:
+                ethnicity_source_value = "demographics+ethnic (ethnicity): 2 (Not Hispanic or Latino)"
+            
             person_data.update(
                 {
                     "ethnicity_concept_id": ethnicity_concept_id,
                     "ethnicity_concept_name": ethnicity_concept_name,
-                    "ethnicity_source_value": (
-                        "Hispanic or Latino"
-                        if row["ethnic"] == 1
-                        else "Not Hispanic or Latino" if row["ethnic"] == 2 else None
-                    ),
+                    "ethnicity_source_value": ethnicity_source_value,
                 }
             )
 
             # Process year of birth
             person_data["year_of_birth"] = relative_day_to_year(row["dob"])
+            # Note: year_of_birth doesn't have a source_value column in OMOP PERSON table
 
             # Process race
             race_columns = ["raceamin", "raceasn", "raceblk", "racenh", "racewt"]
@@ -108,15 +138,16 @@ def process_demographics_to_person():
 
             # If multiple races are selected, list them all
             if sum(race_values) > 1:
-                selected_races = []
+                race_source_parts = []
                 for col in race_columns:
                     if row[col] == 1:
-                        selected_races.append(race_mapping[col][2])  # Get source value
+                        race_name = race_mapping[col][2]  # Get source value
+                        race_source_parts.append(f"demographics+{col} (race): 1 ({race_name})")
                 person_data.update(
                     {
                         "race_concept_id": 0,
                         "race_concept_name": "No Matching Concept",
-                        "race_source_value": ", ".join(selected_races),
+                        "race_source_value": " | ".join(race_source_parts),
                     }
                 )
             else:
@@ -131,7 +162,7 @@ def process_demographics_to_person():
                             {
                                 "race_concept_id": concept_id,
                                 "race_concept_name": concept_name,
-                                "race_source_value": source_value,
+                                "race_source_value": f"demographics+{col} (race): 1 ({source_value})",
                             }
                         )
                         break

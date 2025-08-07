@@ -1,12 +1,44 @@
 import subprocess
 import os
 import pandas as pd
+import glob
 
 run_table_scripts = True
 run_second_scripts = True
 
 # Set working directory to one level above this script (i.e., OMOP_ETL_MVP/)
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+def rename_csv_to_lowercase():
+    """Rename all CSV files in source_tables directory to lowercase"""
+    source_dir = "source_tables"
+    
+    # Get all CSV files in the directory
+    csv_files = glob.glob(os.path.join(source_dir, "*.csv"))
+    
+    renamed_count = 0
+    for file_path in csv_files:
+        # Get the directory and filename
+        directory = os.path.dirname(file_path)
+        filename = os.path.basename(file_path)
+        
+        # Create lowercase filename
+        lowercase_filename = filename.lower()
+        new_file_path = os.path.join(directory, lowercase_filename)
+        
+        # Only rename if the filename is not already lowercase
+        if filename != lowercase_filename:
+            try:
+                os.rename(file_path, new_file_path)
+                print(f"Renamed: {filename} -> {lowercase_filename}")
+                renamed_count += 1
+            except OSError as e:
+                print(f"Error renaming {filename}: {e}")
+        else:
+            print(f"Already lowercase: {filename}")
+    
+    print(f"Total files renamed: {renamed_count}")
+    return renamed_count
 
 
 table_scripts_dir = os.path.join("src", "table_scripts")
@@ -61,6 +93,11 @@ if __name__ == "__main__":
     os.makedirs("processed_source", exist_ok=True)
     os.makedirs("combined_omop", exist_ok=True)
     os.makedirs("final_omop", exist_ok=True)
+
+    # Step 1: Convert CSV filenames to lowercase
+    print("Step 1: Converting CSV filenames to lowercase...")
+    rename_csv_to_lowercase()
+    print()
 
     if run_table_scripts:
         for script in table_scripts:
