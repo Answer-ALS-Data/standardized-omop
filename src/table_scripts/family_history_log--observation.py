@@ -347,25 +347,44 @@ def process_family_history(row, index_date):
         else:
             famrel_text = famrel.strip().lower()
 
-        # Create family member source value
-        family_source = f"relative: {famrel_text}"
+        # Create family member source value using new format
+        family_source_parts = []
+        
+        # Add relative information
+        if famrel_text and famrel_text != "unknown":
+            famrel_value = int(float(row['famrel'])) if pd.notna(row['famrel']) else row['famrel']
+            family_source_parts.append(f"family_history_log+famrel (family relationship): {famrel_value} ({famrel_text})")
+        
+        # Add heredity information
         if heredity_source is not None:
-            family_source += f" | heredity: {heredity_source}"
+            famher_value = int(float(raw_famher)) if raw_famher and raw_famher.replace('.', '').isdigit() else raw_famher
+            family_source_parts.append(f"family_history_log+famher (heredity): {famher_value} ({heredity_source})")
         elif raw_famher:
             # Compare raw_famher with "2" for maternal, anything else (including "1") is paternal
             heredity_text = "maternal" if raw_famher == "2" else "paternal"
-            family_source += f" | heredity: {heredity_text}"
-
+            famher_value = int(float(raw_famher)) if raw_famher and raw_famher.replace('.', '').isdigit() else raw_famher
+            family_source_parts.append(f"family_history_log+famher (heredity): {famher_value} ({heredity_text})")
+        
         # Add gender information
-        family_source += f" | gender: {gender_text}"
+        if gender_text and gender_text != "blank":
+            famgen_value = int(float(raw_famgen)) if raw_famgen and str(raw_famgen).replace('.', '').isdigit() else raw_famgen
+            family_source_parts.append(f"family_history_log+famgen (gender): {famgen_value} ({gender_text})")
+        
+        family_source = " | ".join(family_source_parts) if family_source_parts else None
 
         # Process diseases
         for var, concept in DISEASE_CONCEPTS.items():
             if var in row and pd.notna(row[var]) and row[var] == 1:
                 observation = create_base_observation(row, index_date)
-                value_source = f"condition: {concept['source']}"
+                
+                # Create value source using new format
+                value_source_parts = [f"family_history_log+{var} ({concept['source']}): 1 (yes)"]
+                
+                # Add specific details if available
                 if f"{var}sp" in row and pd.notna(row[f"{var}sp"]):
-                    value_source += f" | other: {row[f'{var}sp']}"
+                    value_source_parts.append(f"family_history_log+{var}sp (specific details): {row[f'{var}sp']}")
+                
+                value_source = " | ".join(value_source_parts)
 
                 observation.update(
                     {
@@ -383,9 +402,15 @@ def process_family_history(row, index_date):
         for var, concept in GENE_CONCEPTS.items():
             if var in row and pd.notna(row[var]) and row[var] == 1:
                 observation = create_base_observation(row, index_date)
-                value_source = f"gene: {concept['source']} positive"
+                
+                # Create value source using new format
+                value_source_parts = [f"family_history_log+{var} ({concept['source']}): 1 (yes)"]
+                
+                # Add specific details if available
                 if var == "fhgnot" and "fhgnotsp" in row and pd.notna(row["fhgnotsp"]):
-                    value_source += f" | other: {row['fhgnotsp']}"
+                    value_source_parts.append(f"family_history_log+fhgnotsp (specific gene details): {row['fhgnotsp']}")
+
+                value_source = " | ".join(value_source_parts)
 
                 observation.update(
                     {
