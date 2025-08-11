@@ -217,28 +217,39 @@ def main():
                 indication = row.get("medind", "")
                 indication = "" if pd.isna(indication) else str(indication)
 
-                # Calculate dates
-                start_date = (
-                    relative_day_to_date(row["medstdt"], index_date)
-                    if not pd.isna(row["medstdt"])
-                    else index_date
-                )
-                end_date = (
-                    relative_day_to_date(row["medenddt"], index_date)
-                    if not pd.isna(row["medenddt"])
-                    else start_date
-                )
-                verbatim_end_date = (
-                    relative_day_to_date(row["medenddt"], index_date)
-                    if not pd.isna(row["medenddt"])
-                    else None
-                )
+                # Calculate dates with the new logic
+                medstdt_blank = pd.isna(row["medstdt"])
+                medenddt_blank = pd.isna(row["medenddt"])
+                
+                # Default date for when both are blank
+                default_date = datetime.strptime("1900-01-01", "%Y-%m-%d")
+                
+                if medstdt_blank and medenddt_blank:
+                    # Both are blank - use 1900-01-01 for both
+                    start_date = default_date
+                    end_date = default_date
+                    verbatim_end_date = None
+                elif not medstdt_blank and medenddt_blank:
+                    # medstdt is not blank, but medenddt is - set medenddt = medstdt
+                    start_date = relative_day_to_date(row["medstdt"], index_date)
+                    end_date = start_date
+                    verbatim_end_date = None
+                elif medstdt_blank and not medenddt_blank:
+                    # medstdt is blank, but medenddt isn't - set medstdt = medenddt
+                    end_date = relative_day_to_date(row["medenddt"], index_date)
+                    start_date = end_date
+                    verbatim_end_date = end_date
+                else:
+                    # Both are not blank - treat normally
+                    start_date = relative_day_to_date(row["medstdt"], index_date)
+                    end_date = relative_day_to_date(row["medenddt"], index_date)
+                    verbatim_end_date = end_date
 
-                # Format dates as dd/mm/yyyy
-                start_date_str = start_date.strftime("%d/%m/%Y")
-                end_date_str = end_date.strftime("%d/%m/%Y")
+                # Format dates as yyyy-mm-dd
+                start_date_str = start_date.strftime("%Y-%m-%d")
+                end_date_str = end_date.strftime("%Y-%m-%d")
                 verbatim_end_date_str = (
-                    verbatim_end_date.strftime("%d/%m/%Y") if verbatim_end_date else ""
+                    verbatim_end_date.strftime("%Y-%m-%d") if verbatim_end_date else ""
                 )
 
                 # Build drug source value in new format

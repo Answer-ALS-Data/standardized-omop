@@ -70,35 +70,47 @@ def main():
             # ALS group
             if subject_group_id == "1":
                 # Process diagnosis date
-                if pd.notna(row.get("diagdt")):
-                    condition_start_date = relative_day_to_date(row["diagdt"], index_date)
-                    diagnosis_concept_id = "373182"
-                    diagnosis_concept_name = "Amyotrophic lateral sclerosis"
-                    group_interp = subject_group_interpretation.get(subject_group_id, "")
-                    if group_interp:
-                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
-                    else:
-                        group_part = f"subjects+subject_group_id: {subject_group_id}"
-                    condition_source_value = f"{group_part} | aalshxfx+diagdt (Date of ALS diagnosis): {int(row['diagdt'])} (days since screening)"
-                    output_data = pd.concat(
-                        [
-                            output_data,
-                            pd.DataFrame(
-                                [
-                                    {
-                                        "person_id": person_id,
-                                        "condition_concept_id": diagnosis_concept_id,
-                                        "condition_concept_name": diagnosis_concept_name,
-                                        "condition_source_value": condition_source_value,
-                                        "condition_start_date": condition_start_date,
-                                        "condition_type_concept_id": 32851,
-                                        "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
-                                    }
-                                ]
-                            ),
-                        ],
-                        ignore_index=True,
-                    )
+                # Fill empty diagdt with 1900-01-01
+                diagdt_value = row.get("diagdt")
+                if pd.isna(diagdt_value):
+                    # Calculate days from 1900-01-01 to 2016-01-01 (index_date)
+                    # 1900-01-01 is 42368 days before 2016-01-01
+                    diagdt_value = -42368
+                
+                condition_start_date = relative_day_to_date(diagdt_value, index_date)
+                diagnosis_concept_id = "373182"
+                diagnosis_concept_name = "Amyotrophic lateral sclerosis"
+                group_interp = subject_group_interpretation.get(subject_group_id, "")
+                if group_interp:
+                    group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                else:
+                    group_part = f"subjects+subject_group_id: {subject_group_id}"
+                # Show original value in source, or indicate if it was blank
+                original_diagdt = row.get("diagdt")
+                if pd.isna(original_diagdt):
+                    diagdt_display = "BLANK (filled with 1900-01-01)"
+                else:
+                    diagdt_display = f"{int(original_diagdt)} (days since screening)"
+                condition_source_value = f"{group_part} | aalshxfx+diagdt (Date of ALS diagnosis): {diagdt_display}"
+                output_data = pd.concat(
+                    [
+                        output_data,
+                        pd.DataFrame(
+                            [
+                                {
+                                    "person_id": person_id,
+                                    "condition_concept_id": diagnosis_concept_id,
+                                    "condition_concept_name": diagnosis_concept_name,
+                                    "condition_source_value": condition_source_value,
+                                    "condition_start_date": condition_start_date,
+                                    "condition_type_concept_id": 32851,
+                                    "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",
+                                }
+                            ]
+                        ),
+                    ],
+                    ignore_index=True,
+                )
                 # Process ALS symptom onset date
                 if pd.notna(row.get("onsetdt")):
                     condition_start_date = relative_day_to_date(row["onsetdt"], index_date)

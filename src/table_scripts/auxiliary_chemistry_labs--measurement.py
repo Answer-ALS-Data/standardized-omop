@@ -80,12 +80,19 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
         person_id = row["Participant_ID"]
 
         # Calculate visit date using relative_day_to_date and format as YYYY-MM-DD
-        visit_date = relative_day_to_date(row["labdt"], index_date)
-        if visit_date is None:
+        # If labdt is empty, use 1900-01-01 as default
+        if pd.isna(row["labdt"]):
+            visit_date = datetime(1900, 1, 1)
             logging.warning(
-                f"Skipping row for person_id {person_id} due to invalid labdt: {row['labdt']}"
+                f"Using default date 1900-01-01 for person_id {person_id} due to empty labdt"
             )
-            continue
+        else:
+            visit_date = relative_day_to_date(row["labdt"], index_date)
+            if visit_date is None:
+                logging.warning(
+                    f"Skipping row for person_id {person_id} due to invalid labdt: {row['labdt']}"
+                )
+                continue
         visit_date_str = visit_date.strftime("%Y-%m-%d")
 
         # Process each lab measurement
