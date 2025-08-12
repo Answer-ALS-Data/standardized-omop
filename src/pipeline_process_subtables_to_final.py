@@ -2,9 +2,56 @@ import subprocess
 import os
 import pandas as pd
 import glob
+import shutil
+from pathlib import Path
 
 run_table_scripts = True
 run_second_scripts = True
+
+def cleanup_folders():
+    """Delete all files in specified folders before starting the pipeline."""
+    print("Cleaning up folders before starting pipeline...")
+    print("=" * 50)
+    
+    # Folders to clean up
+    folders_to_clean = [
+        "combined_omop",
+        "final_omop", 
+        "processed_source",
+        "redundant",
+        "logs"
+    ]
+    
+    for folder_name in folders_to_clean:
+        folder_path = Path(folder_name)
+        
+        if not folder_path.exists():
+            print(f"Warning: Folder '{folder_name}' does not exist.")
+            continue
+        
+        if not folder_path.is_dir():
+            print(f"Warning: '{folder_name}' is not a directory.")
+            continue
+        
+        deleted_count = 0
+        for item in folder_path.iterdir():
+            try:
+                if item.is_file():
+                    item.unlink()
+                    print(f"Deleted file: {item}")
+                    deleted_count += 1
+                elif item.is_dir():
+                    shutil.rmtree(item)
+                    print(f"Deleted directory: {item}")
+                    deleted_count += 1
+            except Exception as e:
+                print(f"Error deleting {item}: {e}")
+        
+        print(f"Total items deleted from {folder_name}: {deleted_count}")
+    
+    print("=" * 50)
+    print("Cleanup completed!")
+    print()
 
 # Set working directory to one level above this script (i.e., OMOP_ETL_MVP/)
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,7 +134,27 @@ def transform_table_ids(table_name, input_dir="../combined_omop", output_dir="..
     df = pd.read_csv(input_file)
     # ... rest of your code ...
 
+
+def copy_omop_reference_files():
+    """Copy OMOP reference files from source_tables/omop_tables/ to final_omop/"""
+    reference_files = ["concept.csv", "care_site.csv"]
+    
+    for filename in reference_files:
+        source_file = f"source_tables/omop_tables/{filename}"
+        destination_file = f"final_omop/{filename}"
+        
+        try:
+            shutil.copy2(source_file, destination_file)
+            print(f"Successfully copied {source_file} to {destination_file}")
+        except FileNotFoundError:
+            print(f"Error: {source_file} not found")
+        except Exception as e:
+            print(f"Error copying {filename}: {e}")
+
 if __name__ == "__main__":
+    # Step 0: Clean up folders before starting
+    cleanup_folders()
+    
     # Ensure logs and processed_source directories exist in OMOP_ETL_MVP/
     os.makedirs("logs", exist_ok=True)
     os.makedirs("processed_source", exist_ok=True)
@@ -109,3 +176,8 @@ if __name__ == "__main__":
             script_path = os.path.join(second_scripts_dir, script)
             print(f"Running {script}...")
             subprocess.run(["python3", script_path], check=True)
+    
+    # Step 3: Copy OMOP reference files to final_omop folder
+    print("Step 3: Copying OMOP reference files to final_omop folder...")
+    copy_omop_reference_files()
+    print()

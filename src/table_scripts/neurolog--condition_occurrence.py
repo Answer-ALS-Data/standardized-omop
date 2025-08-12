@@ -29,13 +29,17 @@ def neurolog_hidden2_to_condition_occurrence_condition_concept_id(
 ):
     """Convert NEUROLOG hidden2 values to condition concept IDs using USAGI mapping"""
     try:
+        # Check if source_value is empty or null
+        if pd.isna(source_value) or source_value == "" or str(source_value).strip() == "":
+            return None, None
+        
         mapping = usagi_mapping[usagi_mapping["sourceName"] == source_value]
         if not mapping.empty:
             return mapping.iloc[0]["conceptId"], mapping.iloc[0]["conceptName"]
-        return 0, "No Matching Concept"
+        return None, None
     except Exception as e:
         logging.error(f"Error mapping hidden2 value {source_value}: {str(e)}")
-        return 0, "No Matching Concept"
+        return None, None
 
 
 def main():
@@ -84,6 +88,10 @@ def main():
                     hidden2_value, usagi_mapping
                 )
             )
+            
+            # Skip rows where condition_concept_id is None (empty or unmapped values)
+            if condition_concept_id is None:
+                continue
             
             # Get USAGI mapping equivalence
             mapping_equivalence = "EQUAL"  # Default to EQUAL for now

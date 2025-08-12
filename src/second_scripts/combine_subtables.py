@@ -5,7 +5,7 @@ import logging
 
 # Define priorities for each table type
 PRIORITIES = {
-    "condition_occurrence": ["aalshxfx", "medical_history", "neurolog"],
+    "condition_occurrence": ["aalshxfx", "neurolog", "medical_history"],
     "observation": [
         "aalshxfx",
         "aalsdxfx",
@@ -32,15 +32,15 @@ CONCEPT_NAME_COLUMNS = {
 
 
 def get_concept_info(df, concept_id_col, concept_name_col):
-    """Extract concept_id and concept_name from a dataframe"""
-    if concept_id_col in df.columns:
+    """Extract concept_id, concept_name, and person_id from a dataframe"""
+    if concept_id_col in df.columns and "person_id" in df.columns:
         # Convert to integer type
         df[concept_id_col] = pd.to_numeric(df[concept_id_col], errors="coerce").astype(
             "Int64"
         )
         if concept_name_col in df.columns:
-            return df[[concept_id_col, concept_name_col]].drop_duplicates()
-        return df[[concept_id_col]].drop_duplicates()
+            return df[["person_id", concept_id_col, concept_name_col]].drop_duplicates()
+        return df[["person_id", concept_id_col]].drop_duplicates()
     return pd.DataFrame()
 
 
@@ -78,11 +78,19 @@ def combine_tables():
             # Read the CSV file
             df = pd.read_csv(file_path)
 
+            # Check if required columns exist
+            if concept_id_col not in df.columns:
+                print(f"Warning: {concept_id_col} not found in {file_path}")
+                continue
+                
+            if "person_id" not in df.columns:
+                print(f"Warning: person_id not found in {file_path}")
+                continue
+
             # Convert concept_id column to integer type
-            if concept_id_col in df.columns:
-                df[concept_id_col] = pd.to_numeric(
-                    df[concept_id_col], errors="coerce"
-                ).astype("Int64")
+            df[concept_id_col] = pd.to_numeric(
+                df[concept_id_col], errors="coerce"
+            ).astype("Int64")
 
             if combined_omop_df.empty:
                 # First file becomes the base
@@ -101,15 +109,22 @@ def combine_tables():
 
             # Merge to find redundant concepts
             redundant = pd.merge(
-                current_concepts, existing_concepts, on=concept_id_col, how="inner"
+                current_concepts, existing_concepts, on=[concept_id_col, "person_id"], how="inner"
             )
 
             if not redundant.empty:
                 # Add to redundant concepts
                 redundant_concepts = pd.concat([redundant_concepts, redundant])
 
-                # Remove redundant rows from current dataframe
-                df = df[~df[concept_id_col].isin(redundant[concept_id_col])]
+                # Remove redundant rows from current dataframe (person-specific)
+                # Create a composite key for comparison
+                redundant_keys = redundant[["person_id", concept_id_col]].drop_duplicates()
+                df_keys = df[["person_id", concept_id_col]].drop_duplicates()
+                
+                # Remove rows where both person_id and concept_id match
+                df = df[~df.set_index(["person_id", concept_id_col]).index.isin(
+                    redundant_keys.set_index(["person_id", concept_id_col]).index
+                )]
 
             # Combine with existing data
             combined_omop_df = pd.concat([combined_omop_df, df], ignore_index=True)
@@ -129,6 +144,7 @@ def combine_tables():
                     f"{concept_name_col}_y": f"{concept_name_col}_existing",
                     "source_file_x": "source_file",
                     "source_file_y": "existing_source",
+                    "person_id_x": "person_id",
                 }
             )
 

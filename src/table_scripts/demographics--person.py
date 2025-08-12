@@ -70,7 +70,7 @@ def process_demographics_to_person():
             person_data = {
                 "person_id": row["Participant_ID"],
                 "person_source_value": " | ".join(person_source_parts),
-                "care_site_id": 111219,  # AALS care site ID
+                "care_site_id": 11,  # AALS care site ID
             }
 
             # Process gender
