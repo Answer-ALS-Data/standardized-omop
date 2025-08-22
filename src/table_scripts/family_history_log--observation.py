@@ -218,7 +218,7 @@ def get_relative_concept(famrel, famher):
     if famrel == "grandmother":
         # For source value tracking
         heredity_source = (
-            "blank" if not famher else ("maternal" if famher == "2" else "paternal")
+            "BLANK" if not famher else ("maternal" if famher == "2" else "paternal")
         )
         # Default to paternal if blank
         is_maternal = famher == "2"
@@ -240,7 +240,7 @@ def get_relative_concept(famrel, famher):
     elif famrel == "grandfather":
         # For source value tracking
         heredity_source = (
-            "blank" if not famher else ("maternal" if famher == "2" else "paternal")
+            "BLANK" if not famher else ("maternal" if famher == "2" else "paternal")
         )
         # Default to paternal if blank
         is_maternal = famher == "2"
@@ -336,10 +336,10 @@ def process_family_history(row, index_date):
             gender_text = (
                 "male"
                 if raw_famgen == "1"
-                else ("female" if raw_famgen == "2" else "blank")
+                else ("female" if raw_famgen == "2" else "BLANK")
             )
         else:
-            gender_text = "blank"
+            gender_text = "BLANK"
 
         # Convert numeric famrel to text
         if famrel.replace(".", "").isdigit():
@@ -357,8 +357,11 @@ def process_family_history(row, index_date):
         
         # Add heredity information
         if heredity_source is not None:
-            famher_value = int(float(raw_famher)) if raw_famher and raw_famher.replace('.', '').isdigit() else raw_famher
-            family_source_parts.append(f"family_history_log+famher (heredity): {famher_value} ({heredity_source})")
+            if heredity_source == "BLANK":
+                family_source_parts.append(f"family_history_log+famher (heredity): BLANK")
+            else:
+                famher_value = int(float(raw_famher)) if raw_famher and raw_famher.replace('.', '').isdigit() else raw_famher
+                family_source_parts.append(f"family_history_log+famher (heredity): {famher_value} ({heredity_source})")
         elif raw_famher:
             # Compare raw_famher with "2" for maternal, anything else (including "1") is paternal
             heredity_text = "maternal" if raw_famher == "2" else "paternal"
@@ -366,7 +369,9 @@ def process_family_history(row, index_date):
             family_source_parts.append(f"family_history_log+famher (heredity): {famher_value} ({heredity_text})")
         
         # Add gender information
-        if gender_text and gender_text != "blank":
+        if gender_text == "BLANK":
+            family_source_parts.append(f"family_history_log+famgen (gender): BLANK")
+        elif gender_text:
             famgen_value = int(float(raw_famgen)) if raw_famgen and str(raw_famgen).replace('.', '').isdigit() else raw_famgen
             family_source_parts.append(f"family_history_log+famgen (gender): {famgen_value} ({gender_text})")
         

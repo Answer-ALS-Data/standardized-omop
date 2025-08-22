@@ -225,6 +225,33 @@ def vital_signs_to_measurement(source_df, index_date_str):
 
         # Process blood pressure measurements
         if not pd.isna(row["bpsys"]):
+            # Handle blood pressure position interpretation
+            bppos_value = row.get("bppos")
+            position_interpretation = None
+            value_as_concept_id = None
+            value_as_concept_name = None
+            
+            if not pd.isna(bppos_value):
+                position_interpretation = (
+                    "Standing" if bppos_value == 1
+                    else "Sitting" if bppos_value == 2
+                    else "Supine" if bppos_value == 3
+                    else None
+                )
+                value_as_concept_id = vital_sign_mappings["bpsys"]["value_as_concept_ids"].get(bppos_value)
+                value_as_concept_name = (
+                    "Standing blood pressure" if bppos_value == 1
+                    else "Sitting blood pressure" if bppos_value == 2
+                    else "Lying blood pressure" if bppos_value == 3
+                    else None
+                )
+            
+            # Create value_source_value with position interpretation to the left of the value
+            if position_interpretation:
+                value_source_value = f"vital_signs+bppos (blood pressure position): {bppos_value} ({position_interpretation}) | vital_signs+bpsys: {row['bpsys']}"
+            else:
+                value_source_value = f"vital_signs+bppos (blood pressure position): BLANK | vital_signs+bpsys: {row['bpsys']}"
+            
             transformed_row = {
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["bpsys"]["concept_id"],
@@ -236,24 +263,41 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "unit_concept_id": vital_sign_mappings["bpsys"]["unit_concept_id"],
                 "unit_concept_name": "mmHg",
                 "unit_source_value": "mmHG",
-                "value_as_concept_id": vital_sign_mappings["bpsys"][
-                    "value_as_concept_ids"
-                ].get(row["bppos"]),
-                "value_as_concept_name": (
-                    "Standing blood pressure"
-                    if row["bppos"] == 1
-                    else (
-                        "Sitting blood pressure"
-                        if row["bppos"] == 2
-                        else "Lying blood pressure"
-                    )
-                ),
-                "value_source_value": f"vital_signs+bpsys: {row['bpsys']} | vital_signs+bppos ({('Standing' if row['bppos'] == 1 else 'Sitting' if row['bppos'] == 2 else 'Supine')}): {row['bppos']}",
+                "value_as_concept_id": value_as_concept_id,
+                "value_as_concept_name": value_as_concept_name,
+                "value_source_value": value_source_value,
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)
 
         if not pd.isna(row["bpdias"]):
+            # Handle blood pressure position interpretation
+            bppos_value = row.get("bppos")
+            position_interpretation = None
+            value_as_concept_id = None
+            value_as_concept_name = None
+            
+            if not pd.isna(bppos_value):
+                position_interpretation = (
+                    "Standing" if bppos_value == 1
+                    else "Sitting" if bppos_value == 2
+                    else "Supine" if bppos_value == 3
+                    else None
+                )
+                value_as_concept_id = vital_sign_mappings["bpdias"]["value_as_concept_ids"].get(bppos_value)
+                value_as_concept_name = (
+                    "Standing blood pressure" if bppos_value == 1
+                    else "Sitting blood pressure" if bppos_value == 2
+                    else "Lying blood pressure" if bppos_value == 3
+                    else None
+                )
+            
+            # Create value_source_value with position interpretation to the left of the value
+            if position_interpretation:
+                value_source_value = f"vital_signs+bppos (blood pressure position): {bppos_value} ({position_interpretation}) | vital_signs+bpdias: {row['bpdias']}"
+            else:
+                value_source_value = f"vital_signs+bppos (blood pressure position): BLANK | vital_signs+bpdias: {row['bpdias']}"
+            
             transformed_row = {
                 "person_id": person_id,
                 "measurement_concept_id": vital_sign_mappings["bpdias"]["concept_id"],
@@ -265,19 +309,9 @@ def vital_signs_to_measurement(source_df, index_date_str):
                 "unit_concept_id": vital_sign_mappings["bpdias"]["unit_concept_id"],
                 "unit_concept_name": "mmHg",
                 "unit_source_value": "mmHG",
-                "value_as_concept_id": vital_sign_mappings["bpdias"][
-                    "value_as_concept_ids"
-                ].get(row["bppos"]),
-                "value_as_concept_name": (
-                    "Standing blood pressure"
-                    if row["bppos"] == 1
-                    else (
-                        "Sitting blood pressure"
-                        if row["bppos"] == 2
-                        else "Lying blood pressure"
-                    )
-                ),
-                "value_source_value": f"vital_signs+bpdias: {row['bpdias']} | vital_signs+bppos ({('Standing' if row['bppos'] == 1 else 'Sitting' if row['bppos'] == 2 else 'Supine')}): {row['bppos']}",
+                "value_as_concept_id": value_as_concept_id,
+                "value_as_concept_name": value_as_concept_name,
+                "value_source_value": value_source_value,
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["vsdt"]),
             }
             transformed_rows.append(transformed_row)

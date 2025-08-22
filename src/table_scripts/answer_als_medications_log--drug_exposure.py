@@ -80,13 +80,23 @@ def answer_als_medications_log_route_to_text(route_value):
         return ""
 
 
-def answer_als_medications_log_route_to_drug_exposure_route_source_value(route_value):
+def answer_als_medications_log_route_to_drug_exposure_route_source_value(route_value, route_other_specify=None):
     """Convert route values to route source values in new format"""
+    # Check if route_value is blank (NaN or empty)
+    if pd.isna(route_value) or route_value == "":
+        return build_source_value("answer_als_medications_log", "medrte", "BLANK", "medication route")
+    
     route_text = answer_als_medications_log_route_to_text(route_value)
     if route_text:
         try:
             route_int = int(route_value)
-            return build_source_value("answer_als_medications_log", "medrte", str(route_int), "medication route", route_text)
+            # If route is "other (please specify)" and we have other specify text, include it as separate field
+            if route_int == 99 and route_other_specify and pd.notna(route_other_specify):
+                route_base = build_source_value("answer_als_medications_log", "medrte", str(route_int), "medication route", route_text)
+                route_other = build_source_value("answer_als_medications_log", "medrtesp", route_other_specify, "route other specify")
+                return f"{route_base} | {route_other}"
+            else:
+                return build_source_value("answer_als_medications_log", "medrte", str(route_int), "medication route", route_text)
         except (ValueError, TypeError):
             return build_source_value("answer_als_medications_log", "medrte", route_text, "medication route")
     else:
@@ -194,7 +204,7 @@ def main():
                     )
                 )
                 route_source_value = answer_als_medications_log_route_to_drug_exposure_route_source_value(
-                    row["medrte"]
+                    row["medrte"], row.get("medrtesp", "")
                 )
 
                 # Get unit and frequency information

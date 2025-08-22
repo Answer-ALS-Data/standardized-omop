@@ -160,7 +160,7 @@ def main():
                                         "drug_type_concept_id": 32851,  # Healthcare professional filled survey
                                         "route_concept_id": 0,  # No route information available
                                         "route_concept_name": "No Matching Concept",
-                                        "route_source_value": "",
+                                        "route_source_value": "BLANK",
                                         "visit_occurrence_id": visit_occurrence_id,
                                     }
                                 ]

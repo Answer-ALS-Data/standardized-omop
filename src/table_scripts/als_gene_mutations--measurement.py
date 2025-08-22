@@ -152,6 +152,7 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
                     "measurement_source_value": measurement_source_value,
                     "measurement_date": visit_date,
                     "measurement_type_concept_id": 32851,  # Healthcare professional filled survey
+                    "value_as_number": None,
                     "value_as_concept_id": (
                         9191 if row[test_var] == 1 else 9189
                     ),  # Positive or Negative
@@ -175,6 +176,7 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
         "measurement_source_value",
         "measurement_date",
         "measurement_type_concept_id",
+        "value_as_number",
         "value_as_concept_id",
         "value_as_concept_name",
         "value_source_value",

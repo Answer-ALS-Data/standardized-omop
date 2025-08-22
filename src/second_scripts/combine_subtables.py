@@ -14,6 +14,7 @@ PRIORITIES = {
         "environmental_questionnaire",
     ],
     "measurement": ["als_gene_mutations", "auxiliary_chemistry_labs", "vital_signs"],
+    "drug_exposure": ["answer_als_medications_log", "medical_history"],
 }
 
 # Define concept_id column names for each table type
@@ -21,6 +22,7 @@ CONCEPT_ID_COLUMNS = {
     "condition_occurrence": "condition_concept_id",
     "observation": "observation_concept_id",
     "measurement": "measurement_concept_id",
+    "drug_exposure": "drug_concept_id",
 }
 
 # Define concept name column names for each table type
@@ -28,6 +30,7 @@ CONCEPT_NAME_COLUMNS = {
     "condition_occurrence": "condition_concept_name",
     "observation": "observation_concept_name",
     "measurement": "measurement_concept_name",
+    "drug_exposure": "drug_concept_name",
 }
 
 

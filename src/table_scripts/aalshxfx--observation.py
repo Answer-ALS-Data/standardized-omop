@@ -216,7 +216,7 @@ def main():
                     obs_source_value = f"aalshxfx+{site_var} (Site of onset)"
                     if isinstance(mapping["concept_id"], list):
                         for i in range(len(mapping["concept_id"])):
-                            value_source_value = f"aalshxfx+{site_var} ({mapping['concept_name'][i]}): 1 (Yes)"
+                            value_source_value = f"aalshxfx+{site_var} ({mapping['source_value'][i]}): 1 (Yes)"
                             records.append(
                                 {
                                     "person_id": person_id,
@@ -246,7 +246,7 @@ def main():
                                 }
                             )
                     else:
-                        value_source_value = f"aalshxfx+{site_var} ({mapping['concept_name']}): 1 (Yes)"
+                        value_source_value = f"aalshxfx+{site_var} ({mapping['source_value']}): 1 (Yes)"
                         records.append(
                             {
                                 "person_id": person_id,
@@ -281,7 +281,7 @@ def main():
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
                     obs_source_value = "aalshxfx+hxliuhnd (Site of onset)"
-                    value_source_value = f"aalshxfx+hxliuhnd ({mapping['concept_name'][0]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxliuhnd ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -313,7 +313,7 @@ def main():
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
                     obs_source_value = "aalshxfx+hxliuarm (Site of onset)"
-                    value_source_value = f"aalshxfx+hxliuarm ({mapping['concept_name'][0]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxliuarm ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -347,7 +347,7 @@ def main():
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
                     obs_source_value = "aalshxfx+hxliuhnd (Site of onset)"
-                    value_source_value = f"aalshxfx+hxliuhnd ({mapping['concept_name'][1]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxliuhnd ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -379,7 +379,7 @@ def main():
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
                     obs_source_value = "aalshxfx+hxliuarm (Site of onset)"
-                    value_source_value = f"aalshxfx+hxliuarm ({mapping['concept_name'][1]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxliuarm ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -414,7 +414,7 @@ def main():
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
                     obs_source_value = "aalshxfx+hxlilft (Site of onset)"
-                    value_source_value = f"aalshxfx+hxlilft ({mapping['concept_name'][0]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxlilft ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -446,7 +446,7 @@ def main():
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
                     obs_source_value = "aalshxfx+hxlilleg (Site of onset)"
-                    value_source_value = f"aalshxfx+hxlilleg ({mapping['concept_name'][0]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxlilleg ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -480,7 +480,7 @@ def main():
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
                     obs_source_value = "aalshxfx+hxlilft (Site of onset)"
-                    value_source_value = f"aalshxfx+hxlilft ({mapping['concept_name'][1]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxlilft ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,
@@ -512,7 +512,7 @@ def main():
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
                     obs_source_value = "aalshxfx+hxlilleg (Site of onset)"
-                    value_source_value = f"aalshxfx+hxlilleg ({mapping['concept_name'][1]}): 1 (Yes)"
+                    value_source_value = f"aalshxfx+hxlilleg ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
                             "person_id": person_id,

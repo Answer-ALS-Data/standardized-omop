@@ -64,7 +64,9 @@ def process_demographics_to_person():
             
             # Create person source value with disease status
             person_source_parts = [f"demographics+Participant_ID (participant identifier): {row['Participant_ID']}"]
-            if subject_group_id:
+            if pd.isna(subject_group_id) or subject_group_id == "":
+                person_source_parts.append("subjects+subject_group_id (disease status): BLANK")
+            else:
                 person_source_parts.append(f"subjects+subject_group_id (disease status): {subject_group_id} ({disease_status})")
             
             person_data = {
@@ -77,11 +79,14 @@ def process_demographics_to_person():
             gender_concept_id, gender_concept_name = demographics_sex_to_person_gender(
                 row["sex"]
             )
-            gender_source_value = None
-            if row["sex"] == 1:
+            if pd.isna(row["sex"]) or row["sex"] == "":
+                gender_source_value = "demographics+sex (biological sex): BLANK"
+            elif row["sex"] == 1:
                 gender_source_value = "demographics+sex (biological sex): 1 (Male)"
             elif row["sex"] == 2:
                 gender_source_value = "demographics+sex (biological sex): 2 (Female)"
+            else:
+                gender_source_value = f"demographics+sex (biological sex): {row['sex']} (Unknown value)"
             
             person_data.update(
                 {
@@ -95,11 +100,14 @@ def process_demographics_to_person():
             ethnicity_concept_id, ethnicity_concept_name = (
                 demographics_ethnicity_to_person_ethnicity(row["ethnic"])
             )
-            ethnicity_source_value = None
-            if row["ethnic"] == 1:
+            if pd.isna(row["ethnic"]) or row["ethnic"] == "":
+                ethnicity_source_value = "demographics+ethnic (ethnicity): BLANK"
+            elif row["ethnic"] == 1:
                 ethnicity_source_value = "demographics+ethnic (ethnicity): 1 (Hispanic or Latino)"
             elif row["ethnic"] == 2:
                 ethnicity_source_value = "demographics+ethnic (ethnicity): 2 (Not Hispanic or Latino)"
+            else:
+                ethnicity_source_value = f"demographics+ethnic (ethnicity): {row['ethnic']} (Unknown value)"
             
             person_data.update(
                 {
@@ -136,13 +144,34 @@ def process_demographics_to_person():
                 "racewt": (8527, "White", "White"),
             }
 
+            # Check if all race values are blank/missing
+            all_blank = all(pd.isna(row[col]) or row[col] == "" or row[col] == 0 for col in race_columns)
+            
+            if all_blank:
+                race_source_parts = []
+                for col in race_columns:
+                    if pd.isna(row[col]) or row[col] == "":
+                        race_source_parts.append(f"demographics+{col} (race): BLANK")
+                    else:
+                        race_source_parts.append(f"demographics+{col} (race): {row[col]}")
+                person_data.update(
+                    {
+                        "race_concept_id": 0,
+                        "race_concept_name": "No Matching Concept",
+                        "race_source_value": " | ".join(race_source_parts),
+                    }
+                )
             # If multiple races are selected, list them all
-            if sum(race_values) > 1:
+            elif sum(race_values) > 1:
                 race_source_parts = []
                 for col in race_columns:
                     if row[col] == 1:
                         race_name = race_mapping[col][2]  # Get source value
                         race_source_parts.append(f"demographics+{col} (race): 1 ({race_name})")
+                    elif pd.isna(row[col]) or row[col] == "":
+                        race_source_parts.append(f"demographics+{col} (race): BLANK")
+                    else:
+                        race_source_parts.append(f"demographics+{col} (race): {row[col]}")
                 person_data.update(
                     {
                         "race_concept_id": 0,
@@ -152,6 +181,7 @@ def process_demographics_to_person():
                 )
             else:
                 # Map single race
+                race_found = False
                 for col, (
                     concept_id,
                     concept_name,
@@ -165,7 +195,24 @@ def process_demographics_to_person():
                                 "race_source_value": f"demographics+{col} (race): 1 ({source_value})",
                             }
                         )
+                        race_found = True
                         break
+                
+                # If no race was found, create source value showing all blank values
+                if not race_found:
+                    race_source_parts = []
+                    for col in race_columns:
+                        if pd.isna(row[col]) or row[col] == "":
+                            race_source_parts.append(f"demographics+{col} (race): BLANK")
+                        else:
+                            race_source_parts.append(f"demographics+{col} (race): {row[col]}")
+                    person_data.update(
+                        {
+                            "race_concept_id": 0,
+                            "race_concept_name": "No Matching Concept",
+                            "race_source_value": " | ".join(race_source_parts),
+                        }
+                    )
 
             # Add to result
             result = pd.concat([result, pd.DataFrame([person_data])], ignore_index=True)

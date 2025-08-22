@@ -113,6 +113,7 @@ table_scripts = [
 
 second_scripts = [
     "combine_subtables.py",
+    "add_condition_occurrences.py",
     "create_table_ids.py",
     "person_id_map.py",
     "create_visits.py",
