@@ -223,7 +223,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": 44786930,
-                            "observation_concept_name": "Occupation [NTDS]",
                             "observation_source_value": format_source_value("environmental_questionnaire", occ_var, mapping["concept_name"]),
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -232,13 +231,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"],
-                            "value_as_concept_name": mapping["concept_name"],
                             "value_source_value": format_source_value("environmental_questionnaire", occ_var, mapping["concept_name"], 1, "Yes", include_interpretation=False),
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -254,7 +250,6 @@ def main():
                     {
                         "person_id": person_id,
                         "observation_concept_id": 4036426,
-                        "observation_concept_name": "Frequency of exercise",
                         "observation_source_value": format_source_value("environmental_questionnaire", "exerdd", "Prior to your symptom onset, how many days per week do you exercise at least moderately"),
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
@@ -263,13 +258,10 @@ def main():
                         "value_as_number": row["exerdd"],
                         "value_as_string": None,
                         "value_as_concept_id": None,
-                        "value_as_concept_name": None,
                         "value_source_value": format_source_value("environmental_questionnaire", "exerdd", "Prior to your symptom onset, how many days per week do you exercise at least moderately", row["exerdd"], include_interpretation=False),
                         "qualifier_concept_id": None,
-                        "qualifier_concept_name": None,
                         "qualifier_source_value": None,
                         "unit_concept_id": 4036426,
-                        "unit_concept_name": "day per week",
                         "unit_source_value": format_source_value("environmental_questionnaire", "exerdd", "days per week"),
                         "visit_occurrence_id": get_visit_occurrence_id(
                             person_id, row["Visit_Date"]
@@ -297,7 +289,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": 37162399,
-                            "observation_concept_name": "Military service finding",
                             "observation_source_value": format_source_value("environmental_questionnaire", "milirb", "Were you in the military?"),
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -306,15 +297,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mil_concept_id,
-                            "value_as_concept_name": (
-                                "Yes" if row["milirb"] == 1 else "No"
-                            ),
                             "value_source_value": value_source,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -330,7 +316,6 @@ def main():
                     {
                         "person_id": person_id,
                         "observation_concept_id": 4073594,
-                        "observation_concept_name": "Duration of military service",
                         "observation_source_value": format_source_value("environmental_questionnaire", "yrstb", "How many years were you in the military?"),
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
@@ -339,13 +324,10 @@ def main():
                         "value_as_number": row["yrstb"],
                         "value_as_string": None,
                         "value_as_concept_id": None,
-                        "value_as_concept_name": None,
                         "value_source_value": format_source_value("environmental_questionnaire", "yrstb", "How many years were you in the military", row["yrstb"], include_interpretation=False),
                         "qualifier_concept_id": None,
-                        "qualifier_concept_name": None,
                         "qualifier_source_value": None,
                         "unit_concept_id": 9448,
-                        "unit_concept_name": "year",
                         "unit_source_value": format_source_value("environmental_questionnaire", "yrstb", "years"),
                         "visit_occurrence_id": get_visit_occurrence_id(
                             person_id, row["Visit_Date"]
@@ -368,7 +350,6 @@ def main():
                     {
                         "person_id": person_id,
                         "observation_concept_id": 1340204,
-                        "observation_concept_name": "History of event",
                         "observation_source_value": format_source_value("environmental_questionnaire", "headrb", "Head injury (more than one year prior to symptom onset)"),
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
@@ -377,13 +358,10 @@ def main():
                         "value_as_number": None,
                         "value_as_string": None,
                         "value_as_concept_id": 375415,
-                        "value_as_concept_name": "Injury of head",
                         "value_source_value": value_source,
                         "qualifier_concept_id": None,
-                        "qualifier_concept_name": None,
                         "qualifier_source_value": None,
                         "unit_concept_id": None,
-                        "unit_concept_name": None,
                         "unit_source_value": None,
                         "visit_occurrence_id": get_visit_occurrence_id(
                             person_id, row["Visit_Date"]
@@ -404,7 +382,6 @@ def main():
                     {
                         "person_id": person_id,
                         "observation_concept_id": 1340204,
-                        "observation_concept_name": "History of event",
                         "observation_source_value": format_source_value("environmental_questionnaire", "concussrb", "Concussion history"),
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
@@ -413,13 +390,10 @@ def main():
                         "value_as_number": None,
                         "value_as_string": None,
                         "value_as_concept_id": 4001336,
-                        "value_as_concept_name": "Concussion injury of brain",
                         "value_source_value": format_multiple_source_values(source_parts),
                         "qualifier_concept_id": None,
-                        "qualifier_concept_name": None,
                         "qualifier_source_value": None,
                         "unit_concept_id": None,
-                        "unit_concept_name": None,
                         "unit_source_value": None,
                         "visit_occurrence_id": get_visit_occurrence_id(
                             person_id, row["Visit_Date"]
@@ -437,7 +411,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": 3012697,
-                            "observation_concept_name": "History of Tobacco use",
                             "observation_source_value": format_source_value("environmental_questionnaire", "smokerb", "Have you ever been a smoker?"),
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -446,15 +419,11 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": smk_concept_id,
-                            "value_as_concept_name": (
-                                "Yes" if row["smokerb"] == 1 else "No"
-                            ),
+
                             "value_source_value": format_source_value("environmental_questionnaire", "smokerb", "Have you ever been a smoker?", row["smokerb"], "Yes" if row["smokerb"] == 1 else "No", include_interpretation=False),
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -474,7 +443,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": 903650,
-                            "observation_concept_name": "Cigarettes pack-years smoked during life",
                             "observation_source_value": format_source_value("environmental_questionnaire", "yrssmktb", "How many years were you a smoker? How many packs per day (on average)?"),
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -483,16 +451,13 @@ def main():
                             "value_as_number": pack_years,
                             "value_as_string": None,
                             "value_as_concept_id": None,
-                            "value_as_concept_name": None,
                             "value_source_value": format_multiple_source_values([
                                 format_source_value("environmental_questionnaire", "yrssmktb", "How many years were you a smoker?", row["yrssmktb"], include_interpretation=False),
                                 format_source_value("environmental_questionnaire", "smkavgtb", "Average packs per day", row["smkavgtb"], include_interpretation=False)
                             ]),
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -512,7 +477,6 @@ def main():
                     {
                         "person_id": person_id,
                         "observation_concept_id": 3043872,
-                        "observation_concept_name": "Alcoholic drinks per week - Reported",
                         "observation_source_value": format_source_value("environmental_questionnaire", "driavgtb", "In the 10 years prior to your diagnosis, approximately how much alcohol did you drink"),
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
@@ -521,13 +485,10 @@ def main():
                         "value_as_number": row["driavgtb"],
                         "value_as_string": None,
                         "value_as_concept_id": None,
-                        "value_as_concept_name": None,
                         "value_source_value": format_source_value("environmental_questionnaire", "driavgtb", "In the 10 years prior to your diagnosis, approximately how much alcohol did you drink", row["driavgtb"], include_interpretation=False),
                         "qualifier_concept_id": None,
-                        "qualifier_concept_name": None,
                         "qualifier_source_value": None,
                         "unit_concept_id": 44777559,
-                        "unit_concept_name": "per week",
                         "unit_source_value": format_source_value("environmental_questionnaire", "driavgtb", "drinks per week"),
                         "visit_occurrence_id": get_visit_occurrence_id(
                             person_id, row["Visit_Date"]
@@ -541,20 +502,16 @@ def main():
         column_order = [
             "person_id",
             "observation_concept_id",
-            "observation_concept_name",
             "observation_source_value",
             "observation_date",
             "observation_type_concept_id",
             "value_as_number",
             "value_as_string",
             "value_as_concept_id",
-            "value_as_concept_name",
             "value_source_value",
             "qualifier_concept_id",
-            "qualifier_concept_name",
             "qualifier_source_value",
             "unit_concept_id",
-            "unit_concept_name",
             "unit_source_value",
             "visit_occurrence_id",
             "observation_event_id",
@@ -573,7 +530,7 @@ def main():
         )
 
         # Copy the fixed concept rows back to the main dataframe
-        for col in ["value_as_concept_id", "value_as_concept_name"]:
+        for col in ["value_as_concept_id"]:
             output_data.loc[concept_rows.index, col] = concept_rows[col]
 
         # Save output

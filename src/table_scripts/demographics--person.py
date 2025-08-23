@@ -76,7 +76,7 @@ def process_demographics_to_person():
             }
 
             # Process gender
-            gender_concept_id, gender_concept_name = demographics_sex_to_person_gender(
+            gender_concept_id, _ = demographics_sex_to_person_gender(
                 row["sex"]
             )
             if pd.isna(row["sex"]) or row["sex"] == "":
@@ -91,13 +91,12 @@ def process_demographics_to_person():
             person_data.update(
                 {
                     "gender_concept_id": gender_concept_id,
-                    "gender_concept_name": gender_concept_name,
                     "gender_source_value": gender_source_value,
                 }
             )
 
             # Process ethnicity
-            ethnicity_concept_id, ethnicity_concept_name = (
+            ethnicity_concept_id, _ = (
                 demographics_ethnicity_to_person_ethnicity(row["ethnic"])
             )
             if pd.isna(row["ethnic"]) or row["ethnic"] == "":
@@ -112,7 +111,6 @@ def process_demographics_to_person():
             person_data.update(
                 {
                     "ethnicity_concept_id": ethnicity_concept_id,
-                    "ethnicity_concept_name": ethnicity_concept_name,
                     "ethnicity_source_value": ethnicity_source_value,
                 }
             )
@@ -157,7 +155,7 @@ def process_demographics_to_person():
                 person_data.update(
                     {
                         "race_concept_id": 0,
-                        "race_concept_name": "No Matching Concept",
+
                         "race_source_value": " | ".join(race_source_parts),
                     }
                 )
@@ -175,7 +173,6 @@ def process_demographics_to_person():
                 person_data.update(
                     {
                         "race_concept_id": 0,
-                        "race_concept_name": "No Matching Concept",
                         "race_source_value": " | ".join(race_source_parts),
                     }
                 )
@@ -191,7 +188,6 @@ def process_demographics_to_person():
                         person_data.update(
                             {
                                 "race_concept_id": concept_id,
-                                "race_concept_name": concept_name,
                                 "race_source_value": f"demographics+{col} (race): 1 ({source_value})",
                             }
                         )
@@ -209,7 +205,6 @@ def process_demographics_to_person():
                     person_data.update(
                         {
                             "race_concept_id": 0,
-                            "race_concept_name": "No Matching Concept",
                             "race_source_value": " | ".join(race_source_parts),
                         }
                     )
@@ -222,14 +217,11 @@ def process_demographics_to_person():
             "person_id",
             "person_source_value",
             "gender_concept_id",
-            "gender_concept_name",
             "gender_source_value",
             "year_of_birth",
             "race_concept_id",
-            "race_concept_name",
             "race_source_value",
             "ethnicity_concept_id",
-            "ethnicity_concept_name",
             "ethnicity_source_value",
             "care_site_id",
         ]

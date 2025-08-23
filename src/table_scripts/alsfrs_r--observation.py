@@ -251,20 +251,16 @@ def process_alsfrs_r_to_observation(source_file, index_date):
                     observation = {
                         "person_id": person_id,
                         "observation_concept_id": concept_info["concept_id"],
-                        "observation_concept_name": concept_info["name"],
                         "observation_source_value": f"alsfrs_r+{item} ({concept_info['variable_meaning']})",
                         "observation_date": visit_date,
                         "observation_type_concept_id": 32851,  # Healthcare professional filled survey
                         "value_as_number": value,
                         "value_as_string": "",
                         "value_as_concept_id": "",
-                        "value_as_concept_name": "",
                         "value_source_value": value_source,
                         "qualifier_concept_id": "",
-                        "qualifier_concept_name": "",
                         "qualifier_source_value": "",
                         "unit_concept_id": "",
-                        "unit_concept_name": "",
                         "unit_source_value": "",
                         "visit_occurrence_id": visit_occurrence_id,
                         "observation_event_id": "",
@@ -281,11 +277,8 @@ def process_alsfrs_r_to_observation(source_file, index_date):
         # Ensure specified fields are blank
         blank_fields = [
             "value_as_concept_id",
-            "value_as_concept_name",
             "qualifier_concept_id",
-            "qualifier_concept_name",
             "unit_concept_id",
-            "unit_concept_name",
         ]
         for field in blank_fields:
             result_df[field] = ""

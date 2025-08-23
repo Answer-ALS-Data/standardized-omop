@@ -25,24 +25,16 @@ CONCEPT_ID_COLUMNS = {
     "drug_exposure": "drug_concept_id",
 }
 
-# Define concept name column names for each table type
-CONCEPT_NAME_COLUMNS = {
-    "condition_occurrence": "condition_concept_name",
-    "observation": "observation_concept_name",
-    "measurement": "measurement_concept_name",
-    "drug_exposure": "drug_concept_name",
-}
 
 
-def get_concept_info(df, concept_id_col, concept_name_col):
-    """Extract concept_id, concept_name, and person_id from a dataframe"""
+
+def get_concept_info(df, concept_id_col):
+    """Extract concept_id and person_id from a dataframe"""
     if concept_id_col in df.columns and "person_id" in df.columns:
         # Convert to integer type
         df[concept_id_col] = pd.to_numeric(df[concept_id_col], errors="coerce").astype(
             "Int64"
         )
-        if concept_name_col in df.columns:
-            return df[["person_id", concept_id_col, concept_name_col]].drop_duplicates()
         return df[["person_id", concept_id_col]].drop_duplicates()
     return pd.DataFrame()
 
@@ -62,9 +54,8 @@ def combine_tables():
         combined_omop_df = pd.DataFrame()
         redundant_concepts = pd.DataFrame()
 
-        # Get the concept_id and concept_name column names for this table type
+        # Get the concept_id column name for this table type
         concept_id_col = CONCEPT_ID_COLUMNS[table_type]
-        concept_name_col = CONCEPT_NAME_COLUMNS[table_type]
 
         # Process files in priority order
         for source in priorities:
@@ -101,12 +92,12 @@ def combine_tables():
                 continue
 
             # Get concepts from current file
-            current_concepts = get_concept_info(df, concept_id_col, concept_name_col)
+            current_concepts = get_concept_info(df, concept_id_col)
             current_concepts["source_file"] = file_path.name
 
             # Find redundant concepts
             existing_concepts = get_concept_info(
-                combined_omop_df, concept_id_col, concept_name_col
+                combined_omop_df, concept_id_col
             )
             existing_concepts["source_file"] = "previously_combined_omop"
 
@@ -143,8 +134,6 @@ def combine_tables():
             redundant_concepts = redundant_concepts.rename(
                 columns={
                     f"{concept_id_col}_x": concept_id_col,
-                    f"{concept_name_col}_x": f"{concept_name_col}_source",
-                    f"{concept_name_col}_y": f"{concept_name_col}_existing",
                     "source_file_x": "source_file",
                     "source_file_y": "existing_source",
                     "person_id_x": "person_id",

@@ -48,7 +48,6 @@ def main():
         output_columns = [
             "person_id",
             "condition_concept_id",
-            "condition_concept_name",
             "condition_source_value",
             "condition_start_date",
             "condition_type_concept_id",
@@ -79,7 +78,6 @@ def main():
                 
                 condition_start_date = relative_day_to_date(diagdt_value, index_date)
                 diagnosis_concept_id = "373182"
-                diagnosis_concept_name = "Amyotrophic lateral sclerosis"
                 group_interp = subject_group_interpretation.get(subject_group_id, "")
                 if group_interp:
                     group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
@@ -100,7 +98,6 @@ def main():
                                 {
                                     "person_id": person_id,
                                     "condition_concept_id": diagnosis_concept_id,
-                                    "condition_concept_name": diagnosis_concept_name,
                                     "condition_source_value": condition_source_value,
                                     "condition_start_date": condition_start_date,
                                     "condition_type_concept_id": 32851,
@@ -115,7 +112,6 @@ def main():
                 if pd.notna(row.get("onsetdt")):
                     condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
                     onset_concept_id = "2000000397"
-                    onset_concept_name = concept_id_to_name[onset_concept_id]
                     group_interp = subject_group_interpretation.get(subject_group_id, "")
                     if group_interp:
                         group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
@@ -130,7 +126,6 @@ def main():
                                     {
                                         "person_id": person_id,
                                         "condition_concept_id": onset_concept_id,
-                                        "condition_concept_name": onset_concept_name,
                                         "condition_source_value": condition_source_value,
                                         "condition_start_date": condition_start_date,
                                         "condition_type_concept_id": 32851,
@@ -147,7 +142,6 @@ def main():
                 if pd.notna(row.get("onsetdt")):
                     condition_start_date = relative_day_to_date(row["onsetdt"], index_date)
                     onset_concept_id = "2000002019"
-                    onset_concept_name = concept_id_to_name[onset_concept_id]
                     group_interp = subject_group_interpretation.get(subject_group_id, "")
                     if group_interp:
                         group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
@@ -162,7 +156,6 @@ def main():
                                     {
                                         "person_id": person_id,
                                         "condition_concept_id": onset_concept_id,
-                                        "condition_concept_name": onset_concept_name,
                                         "condition_source_value": condition_source_value,
                                         "condition_start_date": condition_start_date,
                                         "condition_type_concept_id": 32851,

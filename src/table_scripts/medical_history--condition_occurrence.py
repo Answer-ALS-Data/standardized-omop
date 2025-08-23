@@ -54,7 +54,6 @@ def main():
         output_columns = [
             "person_id",
             "condition_concept_id",
-            "condition_concept_name",
             "condition_source_value",
             "condition_start_date",
             "condition_type_concept_id",
@@ -95,7 +94,6 @@ def main():
                                     {
                                         "person_id": person_id,
                                         "condition_concept_id": concept_id,
-                                        "condition_concept_name": concept_name,
                                         "condition_source_value": f"medical_history+medhxdsc (Description): {medhxdsc_value} | medical_history+medhxyr (Year of Diagnosis): {row['medhxyr']} | medical_history+medhxprs (Still Present): {int(row.get('medhxprs', 0)) if pd.notna(row.get('medhxprs')) else ''} ({'yes' if row.get('medhxprs') == 1 else 'no' if row.get('medhxprs') == 2 else 'unknown'}) | +equivalence (usagi omop mapping equivalence): {equivalence}",
                                         "condition_start_date": condition_start_date,
                                         "condition_type_concept_id": 32851,  # Healthcare professional filled survey

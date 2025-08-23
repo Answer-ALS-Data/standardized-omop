@@ -52,7 +52,6 @@ def main():
         output_columns = [
             "person_id",
             "condition_concept_id",
-            "condition_concept_name",
             "condition_source_value",
             "condition_start_date",
             "condition_type_concept_id",
@@ -83,7 +82,7 @@ def main():
 
             # Process hidden2 value
             hidden2_value = row["hidden2"]
-            condition_concept_id, condition_concept_name = (
+            condition_concept_id, _ = (
                 neurolog_hidden2_to_condition_occurrence_condition_concept_id(
                     hidden2_value, usagi_mapping
                 )
@@ -130,7 +129,6 @@ def main():
                             {
                                 "person_id": person_id,
                                 "condition_concept_id": condition_concept_id,
-                                "condition_concept_name": condition_concept_name,
                                 "condition_source_value": condition_source_value,
                                 "condition_start_date": condition_start_date,
                                 "condition_type_concept_id": 32851,  # Updated type

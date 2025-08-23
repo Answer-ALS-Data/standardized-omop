@@ -499,7 +499,6 @@ def process_aalsdxfx_to_observation(source_file, index_date):
                     value = int(row[item["source_column"]])
                     value_as_concept_id = item["value_converter"](value)
                     value_source_value = item["source_value_converter"](value)
-                    value_as_concept_name = item["concept_name_converter"](value)
 
                     # Calculate observation date from alsdxdt
                     observation_date = None
@@ -526,20 +525,16 @@ def process_aalsdxfx_to_observation(source_file, index_date):
                     observation = {
                         "person_id": person_id,
                         "observation_concept_id": item["concept_id"],
-                        "observation_concept_name": item["concept_name"],
                         "observation_source_value": obs_source_value,
                         "observation_date": observation_date,
                         "observation_type_concept_id": 32851,  # Healthcare professional filled survey
                         "value_as_number": "",  # Intentionally empty
                         "value_as_string": "",  # Intentionally empty
                         "value_as_concept_id": value_as_concept_id,
-                        "value_as_concept_name": value_as_concept_name,
                         "value_source_value": val_source_value,
                         "qualifier_concept_id": "",  # Intentionally empty
-                        "qualifier_concept_name": "",  # Intentionally empty
                         "qualifier_source_value": qualifier_source_value,
                         "unit_concept_id": "",  # Intentionally empty
-                        "unit_concept_name": "",  # Intentionally empty
                         "unit_source_value": unit_source_value,
                         "visit_occurrence_id": visit_occurrence_id,
                         "observation_event_id": "",  # Intentionally empty
@@ -553,9 +548,7 @@ def process_aalsdxfx_to_observation(source_file, index_date):
         # Check for missing concept IDs only on relevant columns
         concept_columns = [
             "observation_concept_id",
-            "observation_concept_name",
             "value_as_concept_id",
-            "value_as_concept_name",
         ]
         result_df_concepts = result_df[concept_columns].copy()
         result_df_concepts = check_missing_concept_ids(result_df_concepts)

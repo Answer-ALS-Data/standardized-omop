@@ -273,13 +273,13 @@ def create_base_observation(row, index_date):
         "value_as_number": None,
         "value_as_string": None,
         "value_as_concept_id": None,
-        "value_as_concept_name": None,
+
         "value_source_value": None,
         "qualifier_concept_id": None,
-        "qualifier_concept_name": None,
+
         "qualifier_source_value": None,
         "unit_concept_id": None,
-        "unit_concept_name": None,
+
         "unit_source_value": None,
         "visit_occurrence_id": get_visit_occurrence_id(
             row["Participant_ID"], row["Visit_Date"]
@@ -394,10 +394,8 @@ def process_family_history(row, index_date):
                 observation.update(
                     {
                         "observation_concept_id": concept_id,
-                        "observation_concept_name": concept_name,
                         "observation_source_value": family_source,
                         "value_as_concept_id": concept["id"],
-                        "value_as_concept_name": concept["name"],
                         "value_source_value": value_source,
                     }
                 )
@@ -420,10 +418,8 @@ def process_family_history(row, index_date):
                 observation.update(
                     {
                         "observation_concept_id": concept_id,
-                        "observation_concept_name": concept_name,
                         "observation_source_value": family_source,
                         "value_as_concept_id": concept["id"],
-                        "value_as_concept_name": concept["name"],
                         "value_source_value": value_source,
                     }
                 )
@@ -456,20 +452,16 @@ def main():
         column_order = [
             "person_id",
             "observation_concept_id",
-            "observation_concept_name",
             "observation_source_value",
             "observation_date",
             "observation_type_concept_id",
             "value_as_number",
             "value_as_string",
             "value_as_concept_id",
-            "value_as_concept_name",
             "value_source_value",
             "qualifier_concept_id",
-            "qualifier_concept_name",
             "qualifier_source_value",
             "unit_concept_id",
-            "unit_concept_name",
             "unit_source_value",
             "visit_occurrence_id",
             "observation_event_id",

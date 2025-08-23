@@ -31,7 +31,6 @@ def main():
             "death_date",
             "death_type_concept_id",
             "cause_concept_id",
-            "cause_concept_name",
             "cause_source_value",
         ]
         output_data = pd.DataFrame(columns=output_columns)
@@ -87,11 +86,6 @@ def main():
             cause_concept_id = (
                 int(row["cause_concept_id"]) if pd.notna(row["cause_concept_id"]) else 0
             )
-            cause_concept_name = (
-                str(row["cause_concept_id_name"])
-                if pd.notna(row["cause_concept_id_name"])
-                else "No Matching Concept"
-            )
 
             # Add row to output
             output_data = pd.concat(
@@ -104,7 +98,6 @@ def main():
                                 "death_date": death_date,
                                 "death_type_concept_id": 32851,  # Healthcare professional filled survey
                                 "cause_concept_id": cause_concept_id,
-                                "cause_concept_name": cause_concept_name,
                                 "cause_source_value": cause_source_value,
                             }
                         ]

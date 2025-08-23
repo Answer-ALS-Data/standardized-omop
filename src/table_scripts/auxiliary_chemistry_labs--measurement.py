@@ -159,21 +159,17 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
                 )
             else:
                 unit_concept_id = mapping["unit_concept_id"]
-                unit_concept_name = mapping["unit_concept_name"]
 
             transformed_row = {
                 "person_id": person_id,
                 "measurement_concept_id": mapping["concept_id"],
-                "measurement_concept_name": mapping["concept_name"],
                 "measurement_source_value": f"auxiliary_chemistry_labs+{source_var} ({mapping['source_meaning']})",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,  # Healthcare professional filled survey
                 "value_as_number": row[source_var],
                 "value_as_concept_id": value_as_concept_id,
-                "value_as_concept_name": "Normal" if row[norm_var] == 1 else "Abnormal",
                 "value_source_value": value_source_value,
                 "unit_concept_id": unit_concept_id,
-                "unit_concept_name": unit_concept_name,
                 "unit_source_value": f"auxiliary_chemistry_labs+{unit_var} (unit): {row[unit_var]}",
                 "visit_occurrence_id": get_visit_occurrence_id(person_id, row["labdt"]),
             }
@@ -190,16 +186,13 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
     required_columns = [
         "person_id",
         "measurement_concept_id",
-        "measurement_concept_name",
         "measurement_source_value",
         "measurement_date",
         "measurement_type_concept_id",
         "value_as_number",
         "value_as_concept_id",
-        "value_as_concept_name",
         "value_source_value",
         "unit_concept_id",
-        "unit_concept_name",
         "unit_source_value",
         "visit_occurrence_id",
     ]

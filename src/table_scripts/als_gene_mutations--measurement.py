@@ -148,7 +148,6 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
                 transformed_row = {
                     "person_id": person_id,
                     "measurement_concept_id": mapping["concept_id"],
-                    "measurement_concept_name": mapping["concept_name"],
                     "measurement_source_value": measurement_source_value,
                     "measurement_date": visit_date,
                     "measurement_type_concept_id": 32851,  # Healthcare professional filled survey
@@ -156,7 +155,6 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
                     "value_as_concept_id": (
                         9191 if row[test_var] == 1 else 9189
                     ),  # Positive or Negative
-                    "value_as_concept_name": result_text,
                     "value_source_value": value_source_value,
                     "visit_occurrence_id": f"{person_id}_{row['Visit_Date']}",  # Use unconverted Visit_Date
                 }
@@ -172,16 +170,13 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
     required_columns = [
         "person_id",
         "measurement_concept_id",
-        "measurement_concept_name",
         "measurement_source_value",
         "measurement_date",
         "measurement_type_concept_id",
         "value_as_number",
         "value_as_concept_id",
-        "value_as_concept_name",
         "value_source_value",
         "unit_concept_id",
-        "unit_concept_name",
         "unit_source_value",
         "visit_occurrence_id",
     ]

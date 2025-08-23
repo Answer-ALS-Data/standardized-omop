@@ -80,14 +80,12 @@ def main():
         output_columns = [
             "person_id",
             "drug_concept_id",
-            "drug_concept_name",
             "drug_source_value",
             "drug_exposure_start_date",
             "drug_exposure_end_date",
             "verbatim_end_date",
             "drug_type_concept_id",
             "route_concept_id",
-            "route_concept_name",
             "route_source_value",
             "visit_occurrence_id",
         ]
@@ -152,14 +150,12 @@ def main():
                                     {
                                         "person_id": person_id,
                                         "drug_concept_id": concept_id,
-                                        "drug_concept_name": concept_name,
                                         "drug_source_value": drug_source_value,
                                         "drug_exposure_start_date": drug_exposure_start_date,
                                         "drug_exposure_end_date": drug_exposure_end_date,
                                         "verbatim_end_date": verbatim_end_date,
                                         "drug_type_concept_id": 32851,  # Healthcare professional filled survey
                                         "route_concept_id": 0,  # No route information available
-                                        "route_concept_name": "No Matching Concept",
                                         "route_source_value": "BLANK",
                                         "visit_occurrence_id": visit_occurrence_id,
                                     }

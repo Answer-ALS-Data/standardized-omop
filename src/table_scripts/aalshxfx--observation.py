@@ -200,10 +200,8 @@ def main():
             # Determine concept for anatomical site of symptom onset
             if subject_group_id == "1":
                 site_concept_id = "2000000396"
-                site_concept_name = concept_id_to_name[site_concept_id]
             elif subject_group_id == "17":
                 site_concept_id = "2000002018"
-                site_concept_name = concept_id_to_name[site_concept_id]
 
             # Process each site variable
             for site_var, mapping in SITE_MAPPINGS.items():
@@ -221,7 +219,6 @@ def main():
                                 {
                                     "person_id": person_id,
                                     "observation_concept_id": site_concept_id,
-                                    "observation_concept_name": site_concept_name,
                                     "observation_source_value": obs_source_value,
                                     "observation_date": relative_day_to_date(
                                         row["Visit_Date"], index_date
@@ -230,13 +227,10 @@ def main():
                                     "value_as_number": None,
                                     "value_as_string": None,
                                     "value_as_concept_id": mapping["concept_id"][i],
-                                    "value_as_concept_name": mapping["concept_name"][i],
                                     "value_source_value": value_source_value,
                                     "qualifier_concept_id": None,
-                                    "qualifier_concept_name": None,
                                     "qualifier_source_value": None,
                                     "unit_concept_id": None,
-                                    "unit_concept_name": None,
                                     "unit_source_value": None,
                                     "visit_occurrence_id": get_visit_occurrence_id(
                                         person_id, row["Visit_Date"]
@@ -251,7 +245,6 @@ def main():
                             {
                                 "person_id": person_id,
                                 "observation_concept_id": site_concept_id,
-                                "observation_concept_name": site_concept_name,
                                 "observation_source_value": obs_source_value,
                                 "observation_date": relative_day_to_date(
                                     row["Visit_Date"], index_date
@@ -260,13 +253,10 @@ def main():
                                 "value_as_number": None,
                                 "value_as_string": None,
                                 "value_as_concept_id": mapping["concept_id"],
-                                "value_as_concept_name": mapping["concept_name"],
                                 "value_source_value": value_source_value,
                                 "qualifier_concept_id": None,
-                                "qualifier_concept_name": None,
                                 "qualifier_source_value": None,
                                 "unit_concept_id": None,
-                                "unit_concept_name": None,
                                 "unit_source_value": None,
                                 "visit_occurrence_id": get_visit_occurrence_id(
                                     person_id, row["Visit_Date"]
@@ -286,7 +276,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -295,13 +284,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
-                            "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -318,7 +304,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -327,13 +312,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
-                            "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -352,7 +334,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -361,13 +342,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
-                            "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -384,7 +362,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -393,13 +370,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
-                            "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -419,7 +393,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -428,13 +401,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
-                            "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -451,7 +421,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -460,13 +429,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][0],
-                            "value_as_concept_name": mapping["concept_name"][0],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -485,7 +451,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -494,13 +459,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
-                            "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -517,7 +479,6 @@ def main():
                         {
                             "person_id": person_id,
                             "observation_concept_id": site_concept_id,
-                            "observation_concept_name": site_concept_name,
                             "observation_source_value": obs_source_value,
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
@@ -526,13 +487,10 @@ def main():
                             "value_as_number": None,
                             "value_as_string": None,
                             "value_as_concept_id": mapping["concept_id"][1],
-                            "value_as_concept_name": mapping["concept_name"][1],
                             "value_source_value": value_source_value,
                             "qualifier_concept_id": None,
-                            "qualifier_concept_name": None,
                             "qualifier_source_value": None,
                             "unit_concept_id": None,
-                            "unit_concept_name": None,
                             "unit_source_value": None,
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
@@ -555,7 +513,6 @@ def main():
                     {
                         "person_id": person_id,
                         "observation_concept_id": site_concept_id,
-                        "observation_concept_name": site_concept_name,
                         "observation_source_value": obs_source_value,
                         "observation_date": relative_day_to_date(
                             row["Visit_Date"], index_date
@@ -564,13 +521,10 @@ def main():
                         "value_as_number": None,
                         "value_as_string": None,
                         "value_as_concept_id": 9177,
-                        "value_as_concept_name": "Other",
                         "value_source_value": value_source_value,
                         "qualifier_concept_id": None,
-                        "qualifier_concept_name": None,
                         "qualifier_source_value": None,
                         "unit_concept_id": None,
-                        "unit_concept_name": None,
                         "unit_source_value": None,
                         "visit_occurrence_id": get_visit_occurrence_id(
                             person_id, row["Visit_Date"]
@@ -584,20 +538,16 @@ def main():
         column_order = [
             "person_id",
             "observation_concept_id",
-            "observation_concept_name",
             "observation_source_value",
             "observation_date",
             "observation_type_concept_id",
             "value_as_number",
             "value_as_string",
             "value_as_concept_id",
-            "value_as_concept_name",
             "value_source_value",
             "qualifier_concept_id",
-            "qualifier_concept_name",
             "qualifier_source_value",
             "unit_concept_id",
-            "unit_concept_name",
             "unit_source_value",
             "visit_occurrence_id",
             "observation_event_id",

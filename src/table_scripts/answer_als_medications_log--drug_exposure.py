@@ -155,14 +155,12 @@ def main():
         output_columns = [
             "person_id",
             "drug_concept_id",
-            "drug_concept_name",
             "drug_source_value",
             "drug_exposure_start_date",
             "drug_exposure_end_date",
             "verbatim_end_date",
             "drug_type_concept_id",
             "route_concept_id",
-            "route_concept_name",
             "route_source_value",
             "visit_occurrence_id",
         ]
@@ -198,7 +196,7 @@ def main():
             # Process each matching concept (could be multiple)
             for _, mapping in mappings.iterrows():
                 # Get route information
-                route_concept_id, route_concept_name = (
+                route_concept_id, _ = (
                     answer_als_medications_log_route_to_drug_exposure_route_concept_id(
                         row["medrte"]
                     )
@@ -324,14 +322,12 @@ def main():
                 new_row = {
                     "person_id": person_id,
                     "drug_concept_id": mapping["conceptId"],
-                    "drug_concept_name": mapping["conceptName"],
                     "drug_source_value": drug_source_value,
                     "drug_exposure_start_date": start_date_str,
                     "drug_exposure_end_date": end_date_str,
                     "verbatim_end_date": verbatim_end_date_str,
                     "drug_type_concept_id": 32851,  # Healthcare professional filled survey
                     "route_concept_id": route_concept_id,
-                    "route_concept_name": route_concept_name,
                     "route_source_value": route_source_value,
                     "visit_occurrence_id": f"{person_id}_0",  # Default to 0 since we don't have visit date
                 }
