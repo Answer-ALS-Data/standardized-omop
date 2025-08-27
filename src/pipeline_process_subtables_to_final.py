@@ -117,7 +117,8 @@ second_scripts = [
     "create_table_ids.py",
     "person_id_map.py",
     "create_visits.py",
-    "transform_ids.py"
+    "transform_ids.py",
+    "add_missing_columns.py"
 ]
 
 def transform_table_ids(table_name, input_dir="../combined_omop", output_dir="../combined_omop"):

@@ -3,6 +3,9 @@ import os
 from datetime import datetime, timedelta
 import logging
 
+# Configuration flag - set to 'create' or 'remove'
+MODE = 'remove'  # Options: 'create' (normal visit creation) or 'remove' (remove visit_occurrence_id columns)
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -64,6 +67,28 @@ def extract_visit_components(visit_id):
     except Exception as e:
         logging.error(f"Error extracting components from visit_id {visit_id}: {str(e)}")
         return None, None
+
+
+def remove_visit_columns():
+    """Remove visit_occurrence_id columns from all tables"""
+    csv_files = [f for f in os.listdir("combined_omop") if f.endswith(".csv")]
+    logging.info(f"Processing {len(csv_files)} CSV files to remove visit_occurrence_id columns")
+    
+    removed_count = 0
+    for file in csv_files:
+        try:
+            df = pd.read_csv(f"combined_omop/{file}")
+            if "visit_occurrence_id" in df.columns:
+                df = df.drop(columns=["visit_occurrence_id"])
+                df.to_csv(f"combined_omop/{file}", index=False)
+                logging.info(f"Removed visit_occurrence_id column from {file}")
+                removed_count += 1
+            else:
+                logging.info(f"No visit_occurrence_id column found in {file}")
+        except Exception as e:
+            logging.error(f"Error processing {file}: {str(e)}")
+    
+    logging.info(f"Removed visit_occurrence_id columns from {removed_count} files")
 
 
 def create_visits():
@@ -183,6 +208,17 @@ def create_observation_periods():
         logging.error(f"Error creating observation periods: {str(e)}")
 
 
+def main():
+    if MODE == 'create':
+        logging.info("Running in CREATE mode - creating visits normally")
+        create_visits()
+        create_observation_periods()
+    elif MODE == 'remove':
+        logging.info("Running in REMOVE mode - removing visit_occurrence_id columns")
+        remove_visit_columns()
+    else:
+        logging.error(f"Invalid MODE: {MODE}. Must be 'create' or 'remove'")
+
+
 if __name__ == "__main__":
-    create_visits()
-    create_observation_periods()
+    main()

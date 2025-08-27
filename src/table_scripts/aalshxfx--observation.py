@@ -33,6 +33,12 @@ subjects_csv_path = os.path.join("source_tables", "subjects.csv")
 subjects_df = pd.read_csv(subjects_csv_path, dtype={"Participant_ID": str, "subject_group_id": str})
 subject_group_map = dict(zip(subjects_df["Participant_ID"], subjects_df["subject_group_id"]))
 
+# Add subject group interpretation mapping
+subject_group_interpretation = {
+    "1": "ALS",
+    "17": "Non-ALS MND",
+}
+
 # Mapping of source variables to their corresponding concept IDs and names
 SITE_MAPPINGS = {
     "hxgen": {
@@ -46,28 +52,28 @@ SITE_MAPPINGS = {
         "source_value": "Bulbar",
     },
     "hxblbsch": {
-        "concept_id": 23168003,
+        "concept_id": 4047485,
         "concept_name": "Speech dysfunction",
         "source_value": "Speech",
     },
     "hxblbsw": {
-        "concept_id": 288939007,
+        "concept_id": 4125274,
         "concept_name": "Difficulty swallowing",
         "source_value": "Swallowing",
     },
-    "hxax": {"concept_id": 24422004, "concept_name": "Axial", "source_value": "Axial"},
+    "hxax": {"concept_id": 4086896, "concept_name": "Axial", "source_value": "Axial"},
     "hxaxnk": {
-        "concept_id": 45048000,
+        "concept_id": 4260843,
         "concept_name": "Neck structure",
         "source_value": "Neck",
     },
     "hxaxtr": {
-        "concept_id": 22943007,
+        "concept_id": 4042529,
         "concept_name": "Trunk structure",
         "source_value": "Trunk",
     },
     "hxaxtrrp": {
-        "concept_id": 321667001,
+        "concept_id": 4156081,
         "concept_name": "Respiratory tract structure",
         "source_value": "Respiratory",
     },
@@ -82,25 +88,25 @@ SITE_MAPPINGS = {
         "source_value": "Upper",
     },
     "hxliul": {
-        "concept_id": 3488338,
-        "concept_name": "Left upper extremity structure",
+        "concept_id": 4215746,
+        "concept_name": "Structure of left upper limb",
         "source_value": "Left Upper",
     },
     "hxliur": {
-        "concept_id": 3485386,
-        "concept_name": "Right upper extremity structure",
+        "concept_id": 4286959,
+        "concept_name": "Structure of right upper limb",
         "source_value": "Right Upper",
     },
     "hxliuhnd": {
-        "concept_id": [4309650, 78791008],
+        "concept_id": [4309650, 4302584],
         "concept_name": ["Structure of left hand", "Structure of right hand"],
         "source_value": ["Left Hand/fingers", "Right Hand/fingers"],
     },
     "hxliuarm": {
-        "concept_id": [3488338, 3485386],
+        "concept_id": [4215746, 4286959],
         "concept_name": [
-            "Left upper extremity structure",
-            "Right upper extremity structure",
+            "Structure of left upper limb",
+            "Structure of right upper limb",
         ],
         "source_value": ["Left Arm", "Right Arm"],
     },
@@ -110,13 +116,13 @@ SITE_MAPPINGS = {
         "source_value": "Lower",
     },
     "hxlill": {
-        "concept_id": 3492826,
-        "concept_name": "Left lower extremity structure",
+        "concept_id": 4136825,
+        "concept_name": "Structure of left lower limb",
         "source_value": "Left Lower",
     },
     "hxlilr": {
-        "concept_id": 3505838,
-        "concept_name": "Right lower extremity structure",
+        "concept_id": 4268743,
+        "concept_name": "Structure of right lower limb",
         "source_value": "Right Lower",
     },
     "hxlilft": {
@@ -125,10 +131,10 @@ SITE_MAPPINGS = {
         "source_value": ["Left Ankle/foot/toes", "Right Ankle/foot/toes"],
     },
     "hxlilleg": {
-        "concept_id": [3492826, 3505838],
+        "concept_id": [4136825, 4268743],
         "concept_name": [
-            "Left lower extremity structure",
-            "Right lower extremity structure",
+            "Structure of left lower limb",
+            "Structure of right lower limb",
         ],
         "source_value": ["Left Leg", "Right Leg"],
     },
@@ -211,7 +217,12 @@ def main():
 
                 # Only create entry if value is 1
                 if row.get(site_var) == 1:
-                    obs_source_value = f"aalshxfx+{site_var} (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+{site_var} (Site of onset)"
                     if isinstance(mapping["concept_id"], list):
                         for i in range(len(mapping["concept_id"])):
                             value_source_value = f"aalshxfx+{site_var} ({mapping['source_value'][i]}): 1 (Yes)"
@@ -270,7 +281,12 @@ def main():
             if check_limb_combination(row, "hxliul", ["hxliuhnd", "hxliuarm"]):
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
-                    obs_source_value = "aalshxfx+hxliuhnd (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxliuhnd (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuhnd ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -298,7 +314,12 @@ def main():
                     )
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
-                    obs_source_value = "aalshxfx+hxliuarm (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxliuarm (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuarm ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -328,7 +349,12 @@ def main():
             if check_limb_combination(row, "hxliur", ["hxliuhnd", "hxliuarm"]):
                 if row.get("hxliuhnd") == 1:
                     mapping = SITE_MAPPINGS["hxliuhnd"]
-                    obs_source_value = "aalshxfx+hxliuhnd (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxliuhnd (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuhnd ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -356,7 +382,12 @@ def main():
                     )
                 if row.get("hxliuarm") == 1:
                     mapping = SITE_MAPPINGS["hxliuarm"]
-                    obs_source_value = "aalshxfx+hxliuarm (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxliuarm (Site of onset)"
                     value_source_value = f"aalshxfx+hxliuarm ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -387,7 +418,12 @@ def main():
             if check_limb_combination(row, "hxlill", ["hxlilft", "hxlilleg"]):
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
-                    obs_source_value = "aalshxfx+hxlilft (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxlilft (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilft ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -415,7 +451,12 @@ def main():
                     )
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
-                    obs_source_value = "aalshxfx+hxlilleg (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxlilleg (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilleg ({mapping['source_value'][0]}): 1 (Yes)"
                     records.append(
                         {
@@ -445,7 +486,12 @@ def main():
             if check_limb_combination(row, "hxlilr", ["hxlilft", "hxlilleg"]):
                 if row.get("hxlilft") == 1:
                     mapping = SITE_MAPPINGS["hxlilft"]
-                    obs_source_value = "aalshxfx+hxlilft (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxlilft (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilft ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -473,7 +519,12 @@ def main():
                     )
                 if row.get("hxlilleg") == 1:
                     mapping = SITE_MAPPINGS["hxlilleg"]
-                    obs_source_value = "aalshxfx+hxlilleg (Site of onset)"
+                    group_interp = subject_group_interpretation.get(subject_group_id, "")
+                    if group_interp:
+                        group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                    else:
+                        group_part = f"subjects+subject_group_id: {subject_group_id}"
+                    obs_source_value = f"{group_part} | aalshxfx+hxlilleg (Site of onset)"
                     value_source_value = f"aalshxfx+hxlilleg ({mapping['source_value'][1]}): 1 (Yes)"
                     records.append(
                         {
@@ -508,7 +559,12 @@ def main():
                     value_source_value = f"aalshxfx+hxot: Other: {str(row['hxotsp']).strip()}"
 
                 # Create single Other entry
-                obs_source_value = "aalshxfx+hxot (Site of onset)"
+                group_interp = subject_group_interpretation.get(subject_group_id, "")
+                if group_interp:
+                    group_part = f"subjects+subject_group_id: {subject_group_id} ({group_interp})"
+                else:
+                    group_part = f"subjects+subject_group_id: {subject_group_id}"
+                obs_source_value = f"{group_part} | aalshxfx+hxot (Site of onset)"
                 records.append(
                     {
                         "person_id": person_id,

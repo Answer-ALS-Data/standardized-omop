@@ -17,6 +17,43 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
+def is_numeric_value(value):
+    """
+    Check if a value can be converted to a number.
+    
+    Args:
+        value: The value to check
+        
+    Returns:
+        bool: True if the value is numeric, False otherwise
+    """
+    if pd.isna(value):
+        return False
+    
+    try:
+        float(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+def safe_numeric_value(value):
+    """
+    Safely convert a value to a number, returning None if conversion fails.
+    
+    Args:
+        value: The value to convert
+        
+    Returns:
+        float or None: The numeric value if conversion succeeds, None otherwise
+    """
+    if pd.isna(value):
+        return None
+    
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
 def format_source_value(table_name, variable_name, interpretation=None, value=None, value_interpretation=None, include_interpretation=True):
     """
     Format a single source value according to the new specification.
@@ -246,30 +283,33 @@ def main():
 
             # Process exercise frequency
             if pd.notna(row.get("exerdd")):
-                records.append(
-                    {
-                        "person_id": person_id,
-                        "observation_concept_id": 4036426,
-                        "observation_source_value": format_source_value("environmental_questionnaire", "exerdd", "Prior to your symptom onset, how many days per week do you exercise at least moderately"),
-                        "observation_date": relative_day_to_date(
-                            row["Visit_Date"], index_date
-                        ),
-                        "observation_type_concept_id": 32851,
-                        "value_as_number": row["exerdd"],
-                        "value_as_string": None,
-                        "value_as_concept_id": None,
-                        "value_source_value": format_source_value("environmental_questionnaire", "exerdd", "Prior to your symptom onset, how many days per week do you exercise at least moderately", row["exerdd"], include_interpretation=False),
-                        "qualifier_concept_id": None,
-                        "qualifier_source_value": None,
-                        "unit_concept_id": 4036426,
-                        "unit_source_value": format_source_value("environmental_questionnaire", "exerdd", "days per week"),
-                        "visit_occurrence_id": get_visit_occurrence_id(
-                            person_id, row["Visit_Date"]
-                        ),
-                        "observation_event_id": None,
-                        "obs_event_field_concept_id": None,
-                    }
-                )
+                if is_numeric_value(row["exerdd"]):
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 4036426,
+                            "observation_source_value": format_source_value("environmental_questionnaire", "exerdd", "Prior to your symptom onset, how many days per week do you exercise at least moderately"),
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": safe_numeric_value(row["exerdd"]),
+                            "value_as_string": None,
+                            "value_as_concept_id": None,
+                            "value_source_value": format_source_value("environmental_questionnaire", "exerdd", "Prior to your symptom onset, how many days per week do you exercise at least moderately", row["exerdd"], include_interpretation=False),
+                            "qualifier_concept_id": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": 8621,
+                            "unit_source_value": format_source_value("environmental_questionnaire", "exerdd", "day per week"),
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+                else:
+                    logging.warning(f"Skipping non-numeric exercise frequency value for person_id {person_id}: {row['exerdd']}")
 
             # Process military service
             if pd.notna(row.get("milirb")):
@@ -312,30 +352,33 @@ def main():
 
             # Process years in military
             if pd.notna(row.get("yrstb")):
-                records.append(
-                    {
-                        "person_id": person_id,
-                        "observation_concept_id": 4073594,
-                        "observation_source_value": format_source_value("environmental_questionnaire", "yrstb", "How many years were you in the military?"),
-                        "observation_date": relative_day_to_date(
-                            row["Visit_Date"], index_date
-                        ),
-                        "observation_type_concept_id": 32851,
-                        "value_as_number": row["yrstb"],
-                        "value_as_string": None,
-                        "value_as_concept_id": None,
-                        "value_source_value": format_source_value("environmental_questionnaire", "yrstb", "How many years were you in the military", row["yrstb"], include_interpretation=False),
-                        "qualifier_concept_id": None,
-                        "qualifier_source_value": None,
-                        "unit_concept_id": 9448,
-                        "unit_source_value": format_source_value("environmental_questionnaire", "yrstb", "years"),
-                        "visit_occurrence_id": get_visit_occurrence_id(
-                            person_id, row["Visit_Date"]
-                        ),
-                        "observation_event_id": None,
-                        "obs_event_field_concept_id": None,
-                    }
-                )
+                if is_numeric_value(row["yrstb"]):
+                    records.append(
+                        {
+                            "person_id": person_id,
+                            "observation_concept_id": 4073594,
+                            "observation_source_value": format_source_value("environmental_questionnaire", "yrstb", "How many years were you in the military?"),
+                            "observation_date": relative_day_to_date(
+                                row["Visit_Date"], index_date
+                            ),
+                            "observation_type_concept_id": 32851,
+                            "value_as_number": safe_numeric_value(row["yrstb"]),
+                            "value_as_string": None,
+                            "value_as_concept_id": None,
+                            "value_source_value": format_source_value("environmental_questionnaire", "yrstb", "How many years were you in the military", row["yrstb"], include_interpretation=False),
+                            "qualifier_concept_id": None,
+                            "qualifier_source_value": None,
+                            "unit_concept_id": 9448,
+                            "unit_source_value": format_source_value("environmental_questionnaire", "yrstb", "years"),
+                            "visit_occurrence_id": get_visit_occurrence_id(
+                                person_id, row["Visit_Date"]
+                            ),
+                            "observation_event_id": None,
+                            "obs_event_field_concept_id": None,
+                        }
+                    )
+                else:
+                    logging.warning(f"Skipping non-numeric years in military value for person_id {person_id}: {row['yrstb']}")
 
             # Process head injury
             if row.get("headrb") == 1 or row.get("edrb") == 1:
@@ -435,30 +478,65 @@ def main():
 
             # Process pack-years
             if pd.notna(row.get("yrssmktb")) and pd.notna(row.get("smkavgtb")):
-                try:
-                    years = float(row["yrssmktb"])
-                    packs_per_day = float(row["smkavgtb"])
-                    pack_years = years * packs_per_day * 365
+                if is_numeric_value(row["yrssmktb"]) and is_numeric_value(row["smkavgtb"]):
+                    try:
+                        years = float(row["yrssmktb"])
+                        packs_per_day = float(row["smkavgtb"])
+                        pack_years = years * packs_per_day * 365
+                        records.append(
+                            {
+                                "person_id": person_id,
+                                "observation_concept_id": 903650,
+                                "observation_source_value": format_source_value("environmental_questionnaire", "yrssmktb", "How many years were you a smoker? How many packs per day (on average)?"),
+                                "observation_date": relative_day_to_date(
+                                    row["Visit_Date"], index_date
+                                ),
+                                "observation_type_concept_id": 32851,
+                                "value_as_number": pack_years,
+                                "value_as_string": None,
+                                "value_as_concept_id": None,
+                                "value_source_value": format_multiple_source_values([
+                                    format_source_value("environmental_questionnaire", "yrssmktb", "How many years were you a smoker?", row["yrssmktb"], include_interpretation=False),
+                                    format_source_value("environmental_questionnaire", "smkavgtb", "Average packs per day", row["smkavgtb"], include_interpretation=False)
+                                ]),
+                                "qualifier_concept_id": None,
+                                "qualifier_source_value": None,
+                                "unit_concept_id": None,
+                                "unit_source_value": None,
+                                "visit_occurrence_id": get_visit_occurrence_id(
+                                    person_id, row["Visit_Date"]
+                                ),
+                                "observation_event_id": None,
+                                "obs_event_field_concept_id": None,
+                            }
+                        )
+                    except (ValueError, TypeError) as e:
+                        logging.warning(
+                            f"Could not calculate pack-years for person_id {person_id}: {str(e)}"
+                        )
+                else:
+                    logging.warning(f"Skipping non-numeric pack-years values for person_id {person_id}: yrssmktb={row['yrssmktb']}, smkavgtb={row['smkavgtb']}")
+
+            # Process alcohol consumption
+            if pd.notna(row.get("driavgtb")):
+                if is_numeric_value(row["driavgtb"]):
                     records.append(
                         {
                             "person_id": person_id,
-                            "observation_concept_id": 903650,
-                            "observation_source_value": format_source_value("environmental_questionnaire", "yrssmktb", "How many years were you a smoker? How many packs per day (on average)?"),
+                            "observation_concept_id": 3043872,
+                            "observation_source_value": format_source_value("environmental_questionnaire", "driavgtb", "In the 10 years prior to your diagnosis, approximately how much alcohol did you drink"),
                             "observation_date": relative_day_to_date(
                                 row["Visit_Date"], index_date
                             ),
                             "observation_type_concept_id": 32851,
-                            "value_as_number": pack_years,
+                            "value_as_number": safe_numeric_value(row["driavgtb"]),
                             "value_as_string": None,
                             "value_as_concept_id": None,
-                            "value_source_value": format_multiple_source_values([
-                                format_source_value("environmental_questionnaire", "yrssmktb", "How many years were you a smoker?", row["yrssmktb"], include_interpretation=False),
-                                format_source_value("environmental_questionnaire", "smkavgtb", "Average packs per day", row["smkavgtb"], include_interpretation=False)
-                            ]),
+                            "value_source_value": format_source_value("environmental_questionnaire", "driavgtb", "In the 10 years prior to your diagnosis, approximately how much alcohol did you drink", row["driavgtb"], include_interpretation=False),
                             "qualifier_concept_id": None,
                             "qualifier_source_value": None,
-                            "unit_concept_id": None,
-                            "unit_source_value": None,
+                            "unit_concept_id": 44777559,
+                            "unit_source_value": format_source_value("environmental_questionnaire", "driavgtb", "drinks per week"),
                             "visit_occurrence_id": get_visit_occurrence_id(
                                 person_id, row["Visit_Date"]
                             ),
@@ -466,37 +544,8 @@ def main():
                             "obs_event_field_concept_id": None,
                         }
                     )
-                except (ValueError, TypeError) as e:
-                    logging.warning(
-                        f"Could not calculate pack-years for person_id {person_id}: {str(e)}"
-                    )
-
-            # Process alcohol consumption
-            if pd.notna(row.get("driavgtb")):
-                records.append(
-                    {
-                        "person_id": person_id,
-                        "observation_concept_id": 3043872,
-                        "observation_source_value": format_source_value("environmental_questionnaire", "driavgtb", "In the 10 years prior to your diagnosis, approximately how much alcohol did you drink"),
-                        "observation_date": relative_day_to_date(
-                            row["Visit_Date"], index_date
-                        ),
-                        "observation_type_concept_id": 32851,
-                        "value_as_number": row["driavgtb"],
-                        "value_as_string": None,
-                        "value_as_concept_id": None,
-                        "value_source_value": format_source_value("environmental_questionnaire", "driavgtb", "In the 10 years prior to your diagnosis, approximately how much alcohol did you drink", row["driavgtb"], include_interpretation=False),
-                        "qualifier_concept_id": None,
-                        "qualifier_source_value": None,
-                        "unit_concept_id": 44777559,
-                        "unit_source_value": format_source_value("environmental_questionnaire", "driavgtb", "drinks per week"),
-                        "visit_occurrence_id": get_visit_occurrence_id(
-                            person_id, row["Visit_Date"]
-                        ),
-                        "observation_event_id": None,
-                        "obs_event_field_concept_id": None,
-                    }
-                )
+                else:
+                    logging.warning(f"Skipping non-numeric alcohol consumption value for person_id {person_id}: {row['driavgtb']}")
 
         # Create DataFrame from records with specified column order
         column_order = [

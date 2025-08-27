@@ -1,5 +1,6 @@
 import pandas as pd
 import logging
+import re
 from datetime import datetime
 from helpers import (
     relative_day_to_date,
@@ -13,6 +14,36 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
+
+
+def is_units_per_liter(unit_str):
+    """
+    Check if the unit string represents units per liter, handling various formats:
+    - "Units/L", "U/L", "units/l", "u/l"
+    - Cases with numbers like "24 - 195 U/L"
+    - Various spacing and punctuation
+    """
+    if pd.isna(unit_str):
+        return False
+    
+    # Convert to string and normalize
+    unit_str = str(unit_str).strip().upper()
+    
+    # Check if the string contains any units/L pattern
+    units_patterns = [
+        r'UNITS/L',
+        r'U/L',
+        r'UNITS/LITRE',
+        r'U/LITRE',
+        r'UNITS/LITER',
+        r'U/LITER'
+    ]
+    
+    for pattern in units_patterns:
+        if re.search(pattern, unit_str):
+            return True
+    
+    return False
 
 
 def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
@@ -47,8 +78,8 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
             "norm_var": "uanorm",
         },
         "accrrslt": {
-            "concept_id": 2212294,
-            "concept_name": "Creatinine; blood",
+            "concept_id": 3016723,
+            "concept_name": "Creatinine [Mass/volume] in Serum or Plasma",
             "source_meaning": "Creatinine",
             "unit_var": "accreuni",  # Fixed unit variable name
             "unit_concept_id": 8840,
@@ -65,7 +96,7 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
             "norm_var": "phonorm",
         },
         "acckrslt": {
-            "concept_id": 3030170,
+            "concept_id": None,  # Will be determined based on unit
             "concept_name": "Creatine kinase measurement",
             "source_meaning": "Creatine Kinase (CK)",
             "unit_var": "acckunit",  # Fixed unit variable name
@@ -103,6 +134,18 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
                     f"Skipping {source_var} for person_id {person_id} due to missing result"
                 )
                 continue
+            
+            # Skip if result contains non-numerical characters (for value_as_number field)
+            result_value = row[source_var]
+            if pd.notna(result_value):
+                # Convert to string to check for non-numerical characters
+                result_str = str(result_value).strip()
+                # Check if the string contains any non-numerical characters (excluding decimal point and minus sign)
+                if not result_str.replace('.', '').replace('-', '').replace('+', '').isdigit():
+                    logging.debug(
+                        f"Skipping {source_var} for person_id {person_id} due to non-numerical characters in result: {result_value}"
+                    )
+                    continue
 
             # Get the corresponding unit variable
             unit_var = mapping["unit_var"]
@@ -149,20 +192,25 @@ def auxiliary_chemistry_labs_to_measurement(source_df, index_date_str):
             # Determine value_as_concept_id based on norm status
             value_as_concept_id = 4069590 if row[norm_var] == 1 else 40641582
 
-            # Special handling for creatine kinase units
+            # Special handling for creatine kinase units and concept IDs
             if source_var == "acckrslt":
-                unit_concept_id = 8645 if "Units/L" in row[unit_var] else 8840
-                unit_concept_name = (
-                    "unit per liter"
-                    if unit_concept_id == 8645
-                    else "milligram per deciliter"
-                )
+                if is_units_per_liter(row[unit_var]):
+                    unit_concept_id = 8645
+                    unit_concept_name = "unit per liter"
+                    concept_id = 3007220  # Creatine kinase [Enzymatic activity/volume] in Serum or Plasma
+                    logging.info(f"Detected units/L format for creatine kinase: '{row[unit_var]}' -> using enzymatic activity concept")
+                else:
+                    unit_concept_id = 8840
+                    unit_concept_name = "milligram per deciliter"
+                    concept_id = 3030170  # Creatine kinase [Mass/volume] in Blood
+                    logging.info(f"Using mass/volume concept for creatine kinase with unit: '{row[unit_var]}'")
             else:
                 unit_concept_id = mapping["unit_concept_id"]
+                concept_id = mapping["concept_id"]
 
             transformed_row = {
                 "person_id": person_id,
-                "measurement_concept_id": mapping["concept_id"],
+                "measurement_concept_id": concept_id,
                 "measurement_source_value": f"auxiliary_chemistry_labs+{source_var} ({mapping['source_meaning']})",
                 "measurement_date": visit_date_str,
                 "measurement_type_concept_id": 32851,  # Healthcare professional filled survey
