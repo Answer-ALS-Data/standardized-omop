@@ -116,7 +116,7 @@ second_scripts = [
     "add_condition_occurrences.py",
     "create_table_ids.py",
     "person_id_map.py",
-    "create_visits.py",
+    "create_observation_periods.py",
     "transform_ids.py",
     "add_missing_columns.py"
 ]
