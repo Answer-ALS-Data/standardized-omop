@@ -35,12 +35,19 @@ def process_demographics_to_person():
         # Read source data
         source_file = "source_tables/demographics.csv"
         subjects_file = "source_tables/subjects.csv"
+        omic_sex_file = "source_tables/other/omic_inferred_sex_if_different.csv"
         logging.info(f"Reading source data from {source_file}")
         df = pd.read_csv(source_file)
         
         # Read subjects data for disease status
         logging.info(f"Reading subjects data from {subjects_file}")
         subjects_df = pd.read_csv(subjects_file)
+        
+        # Read omic inferred sex data
+        logging.info(f"Reading omic inferred sex data from {omic_sex_file}")
+        omic_sex_df = pd.read_csv(omic_sex_file)
+        # Create a lookup dictionary for omic inferred sex
+        omic_sex_lookup = dict(zip(omic_sex_df['Participant_ID'], omic_sex_df['omic_inferred_sex_if_different']))
         
         # Merge demographics with subjects data
         df = df.merge(subjects_df[['Participant_ID', 'subject_group_id']], on='Participant_ID', how='left')
@@ -80,13 +87,19 @@ def process_demographics_to_person():
                 row["sex"]
             )
             if pd.isna(row["sex"]) or row["sex"] == "":
-                gender_source_value = "demographics+sex (biological sex): BLANK"
+                gender_source_value = "demographics+sex (biological sex according to survey): BLANK"
             elif row["sex"] == 1:
-                gender_source_value = "demographics+sex (biological sex): 1 (Male)"
+                gender_source_value = "demographics+sex (biological sex according to survey): 1 (Male)"
             elif row["sex"] == 2:
-                gender_source_value = "demographics+sex (biological sex): 2 (Female)"
+                gender_source_value = "demographics+sex (biological sex according to survey): 2 (Female)"
             else:
-                gender_source_value = f"demographics+sex (biological sex): {row['sex']} (Unknown value)"
+                gender_source_value = f"demographics+sex (biological sex according to survey): {row['sex']} (Unknown value)"
+            
+            # Add omic inferred sex if present for this participant
+            participant_id = row['Participant_ID']
+            if participant_id in omic_sex_lookup:
+                omic_sex_value = omic_sex_lookup[participant_id]
+                gender_source_value += f" | omic_inferred_sex_if_different (omic inferred sex if different from survey): {omic_sex_value}"
             
             person_data.update(
                 {
