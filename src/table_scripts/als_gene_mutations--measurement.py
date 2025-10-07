@@ -34,73 +34,73 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
     # Initialize empty list to store transformed rows
     transformed_rows = []
 
-    # Define the mapping of source variables to measurement concepts and meanings
+    # Define the mapping of test variables to measurement concepts and meanings
     gene_mappings = {
-        "angnd": {
+        "ang": {
             "concept_id": 35961859,
             "concept_name": "ANG (angiogenin) gene variant measurement",
             "source_meaning": "ANG Mutation",
-            "test_var": "ang",
+            "nd_var": "angnd",
         },
-        "c9orfnd": {
+        "c9orf72": {
             "concept_id": 35954626,
             "concept_name": "C9orf72 (C9orf72-SMCR8 complex subunit) gene variant measurement",
             "source_meaning": "C9ORF72 Mutation",
-            "test_var": "c9orf72",
+            "nd_var": "c9orfnd",
         },
-        "fusnd": {
+        "fus": {
             "concept_id": 19643404,
             "concept_name": "FUS gene rearrangement measurement",
             "source_meaning": "FUS Mutation",
-            "test_var": "fus",
+            "nd_var": "fusnd",
         },
-        "mutotsp": {
+        "mutot": {
             "concept_id": 0,
             "concept_name": "No Matching Concept",
             "source_meaning": "Other Mutation: positive",
-            "test_var": "mutot",
+            "nd_var": None,  # No proper nd variable for mutot
         },
-        "prgrnnd": {
+        "progran": {
             "concept_id": 35951629,
             "concept_name": "GRN (granulin precursor) gene variant measurement",
             "source_meaning": "PROGRANULIN Mutation",
-            "test_var": "progran",
+            "nd_var": "prgrnnd",
         },
-        "setxnd": {
+        "setx": {
             "concept_id": 35958907,
             "concept_name": "SETX (senataxin) gene variant measurement",
             "source_meaning": "SETX Mutation",
-            "test_var": "setx",
+            "nd_var": "setxnd",
         },
-        "sod1nd": {
+        "sod1": {
             "concept_id": 35948140,
             "concept_name": "SOD1 (superoxide dismutase 1) gene variant measurement",
             "source_meaning": "SOD1 Mutation",
-            "test_var": "sod1",
+            "nd_var": "sod1nd",
         },
-        "taund": {
+        "tau": {
             "concept_id": 35946715,
             "concept_name": "MAPT (microtubule associated protein tau) gene variant measurement",
             "source_meaning": "TAU Mutation",
-            "test_var": "tau",
+            "nd_var": "taund",
         },
-        "tdp43nd": {
+        "tdp43": {
             "concept_id": 35964178,
             "concept_name": "TARDBP (TAR DNA binding protein) gene variant measurement",
             "source_meaning": "TDP-43 Mutation",
-            "test_var": "tdp43",
+            "nd_var": "tdp43nd",
         },
-        "vapbnd": {
+        "vapb": {
             "concept_id": 35956055,
             "concept_name": "VAPB (VAMP associated protein B and C) gene variant measurement",
             "source_meaning": "VAPB Mutation",
-            "test_var": "vapb",
+            "nd_var": "vapbnd",
         },
-        "vcpnd": {
+        "vcp": {
             "concept_id": 35958302,
             "concept_name": "VCP (valosin containing protein) gene variant measurement",
             "source_meaning": "VCP Mutation",
-            "test_var": "vcp",
+            "nd_var": "vcpnd",
         },
     }
 
@@ -113,37 +113,47 @@ def als_gene_mutations_to_measurement(source_df, index_date_str):
         )
 
         # Process each gene mutation
-        for source_var, mapping in gene_mappings.items():
-            # Skip if not tested (source_variable_1 = 1)
-            if row[source_var] == 1:
-                continue
-
-            # Get the corresponding test result variable
-            test_var = mapping["test_var"]
+        for test_var, mapping in gene_mappings.items():
             if test_var not in row or pd.isna(row[test_var]):
                 continue
 
-            # Only create record if test was performed (source_variable_1 = 0) and has a result
-            if row[source_var] == 0 and row[test_var] in [1, 2]:
+            # Only create record if test_var has a meaningful result (1 = positive, 2 = negative)
+            if row[test_var] in [1, 2]:
                 # Get the text value for the test result
                 result_text = "Positive" if row[test_var] == 1 else "Negative"
 
                 # Build source values using the new format
                 source_parts = []
                 
+                # Add the ___nd variable status first (if it exists)
+                nd_var = mapping["nd_var"]
+                gene_name = mapping['source_meaning'].replace(' Mutation', '')
+                
+                if nd_var is not None:  # Only process nd_var if it exists
+                    if pd.isna(row.get(nd_var)):
+                        nd_status = "BLANK"
+                    elif row[nd_var] == 0:
+                        nd_status = "0 (tested)"
+                    elif row[nd_var] == 1:
+                        nd_status = "1 (not tested)"
+                    else:
+                        nd_status = f"{int(row[nd_var])} (unknown)"
+                    
+                    source_parts.append(f"als_gene_mutations+{nd_var} ({gene_name}): {nd_status}")
+                
                 # Add the test result
                 source_parts.append(f"als_gene_mutations+{test_var}: {int(row[test_var])} ({result_text})")
                 
                 # For SOD1, add the mutation text if available
-                if source_var == "sod1nd" and pd.notna(row.get("sod1muta")):
+                if test_var == "sod1" and pd.notna(row.get("sod1muta")):
                     source_parts.append(f"als_gene_mutations+sod1muta: {row['sod1muta']}")
                 
                 # Join the parts with ' | ' separator
                 value_source_value = " | ".join(source_parts)
                 
-                # For measurement_source_value, use the source variable with gene interpretation
+                # For measurement_source_value, use the test variable with gene interpretation
                 gene_name = mapping['source_meaning'].replace(' Mutation', '')
-                measurement_source_value = f"als_gene_mutations+{source_var} ({gene_name})"
+                measurement_source_value = f"als_gene_mutations+{test_var} ({gene_name})"
 
                 transformed_row = {
                     "person_id": person_id,
