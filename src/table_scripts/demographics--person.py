@@ -99,7 +99,7 @@ def process_demographics_to_person():
             participant_id = row['Participant_ID']
             if participant_id in omic_sex_lookup:
                 omic_sex_value = omic_sex_lookup[participant_id]
-                gender_source_value += f" | omic_inferred_sex_if_different (omic inferred sex if different from survey): {omic_sex_value}"
+                gender_source_value += f" | +omic_inferred_sex_if_different (omic inferred sex if different from survey): {omic_sex_value}"
             
             person_data.update(
                 {
