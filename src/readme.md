@@ -13,7 +13,7 @@ The extract transform load (ETL) process was designed to balance several objecti
 This dataset uses OMOP CDM version 5.4
 
 [CDMv5.4 Diagram](https://ohdsi.github.io/CommonDataModel/index.html):  
-![Diagram][https://ohdsi.github.io/CommonDataModel/index.html]
+![Diagram][https://ohdsi.github.io/CommonDataModel/images/cdm54.png]
 
 [CDMv5.4 Specifications](https://ohdsi.github.io/CommonDataModel/cdm54.html): Breakdown of all CDMv5.4 OMOP tables and variables and their definitions.
 
